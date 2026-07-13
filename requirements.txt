@@ -5,6 +5,7 @@
 Django>=5.2
 psycopg2-binary>=2.9
 python-dotenv>=1.0
+whitenoise>=6.7
 
 # Forms & UI
 django-crispy-forms>=2.6
