@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load jalali_filters %}
+
+{% block title %}{{ title }}{% endblock %}
+{% block page_icon %}sms{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<!-- SMS Nav -->
+<div class="d-flex flex-wrap gap-2 mb-4 animate-in">
+    <a href="{% url 'sms_dashboard' %}" class="btn" style="background:linear-gradient(135deg,#6366f1,#818cf8);color:#fff;border-radius:var(--radius-full);padding:8px 18px;font-size:0.82rem;font-weight:500;display:inline-flex;align-items:center;gap:6px;">
+        <i class="fas fa-home" style="font-size:0.75rem;"></i> داشبورد
+    </a>
+    <a href="{% url 'provider_config' %}" class="btn" style="background:linear-gradient(135deg,#10b981,#34d399);color:#fff;border-radius:var(--radius-full);padding:8px 18px;font-size:0.82rem;font-weight:500;display:inline-flex;align-items:center;gap:6px;">
+        <i class="fas fa-cog" style="font-size:0.75rem;"></i> تنظیمات
+    </a>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 style="margin:0; color:var(--text-primary);"><i class="fas fa-{{ icon }} ms-2" style="color:{{ color }};"></i> {{ title }}</h5>
+    <a href="{% url 'provider_config' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-right ms-1"></i> بازگشت
+    </a>
+</div>
+
+<div class="card cln-card animate-in">
+    <div class="card-header">
+        <i class="fas fa-{{ icon }}" style="color:{{ color }};"></i> {{ title }}
+    </div>
+    <div class="card-body">
+        {% if error %}
+        <div class="alert alert-danger" style="display:flex;align-items:center;gap:8px;">
+            <i class="fas fa-exclamation-triangle"></i> {{ error }}
+        </div>
+        {% elif result %}
+        <div style="background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;overflow-x:auto;">
+            <pre style="margin:0;font-size:0.82rem;color:var(--text-primary);white-space:pre-wrap;word-break:break-all;font-family:inherit;">{{ result }}</pre>
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding:40px;">
+            <i class="fas fa-inbox d-block mb-2" style="font-size:2rem;"></i>
+            داده‌ای یافت نشد
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

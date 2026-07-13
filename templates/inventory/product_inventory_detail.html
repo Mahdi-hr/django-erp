@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% load jalali_filters %}
+
+{% block title %}جزئیات موجودی - {{ inventory.product.name }}{% endblock %}
+{% block page_icon %}warehouse{% endblock %}
+{% block page_title %}موجودی {{ inventory.product.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 style="margin:0;"><i class="fas fa-box ms-2" style="color:var(--info);"></i> موجودی {{ inventory.product.name }}</h5>
+    <a href="{% url 'inventory_dashboard' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-right ms-1"></i> بازگشت
+    </a>
+</div>
+
+<div class="row g-4">
+    <!-- Product Info -->
+    <div class="col-md-4">
+        <div class="card animate-in">
+            <div class="card-header">
+                <i class="fas fa-info-circle" style="color:var(--accent);"></i> اطلاعات محصول
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label" style="color:var(--text-muted);font-size:0.78rem;">نام محصول</label>
+                    <div style="font-weight:600;color:var(--text-primary);">{{ inventory.product.name }}</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" style="color:var(--text-muted);font-size:0.78rem;">کد محصول</label>
+                    <div style="color:var(--text-primary);">{{ inventory.product.code }}</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" style="color:var(--text-muted);font-size:0.78rem;">موجودی فعلی</label>
+                    <div style="font-weight:700;font-size:1.3rem;color:{% if inventory.stock_status == 'out_of_stock' %}#ef4444{% elif inventory.stock_status == 'low' %}#f59e0b{% else %}#10b981{% endif %};">{{ inventory.current_stock }} عدد</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" style="color:var(--text-muted);font-size:0.78rem;">حداقل موجودی</label>
+                    <div style="color:var(--text-primary);">{{ inventory.min_stock }} عدد</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" style="color:var(--text-muted);font-size:0.78rem;">وضعیت</label>
+                    <div>
+                        {% if inventory.stock_status == 'out_of_stock' %}
+                        <span class="badge" style="background:rgba(239,68,68,0.15);color:#ef4444;font-size:0.85rem;"><i class="fas fa-times-circle ms-1"></i> ناموجود</span>
+                        {% elif inventory.stock_status == 'low' %}
+                        <span class="badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;font-size:0.85rem;"><i class="fas fa-exclamation-triangle ms-1"></i> کمبود موجودی</span>
+                        {% else %}
+                        <span class="badge" style="background:rgba(16,185,129,0.15);color:#10b981;font-size:0.85rem;"><i class="fas fa-check-circle ms-1"></i> موجودی کافی</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" style="color:var(--text-muted);font-size:0.78rem;">قیمت تمام‌شده</label>
+                    <div style="color:var(--warning);">{{ inventory.product.cost_price|currency_format }} ریال</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" style="color:var(--text-muted);font-size:0.78rem;">قیمت فروش</label>
+                    <div style="color:var(--success);">{{ inventory.product.sale_price|currency_format }} ریال</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" style="color:var(--text-muted);font-size:0.78rem;">آخرین تاریخ تولید</label>
+                    <div style="color:var(--text-primary);">{{ inventory.last_production_date|to_jalali|default:"-" }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transactions -->
+    <div class="col-md-8">
+        <div class="card animate-in">
+            <div class="card-header">
+                <i class="fas fa-history" style="color:var(--warning);"></i> تاریخچه تراکنش‌ها
+                <span class="badge bg-info me-auto">{{ transactions|length }} تراکنش</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>نوع</th>
+                            <th>مقدار</th>
+                            <th>مرجع</th>
+                            <th>توضیحات</th>
+                            <th>تاریخ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in transactions %}
+                        <tr>
+                            <td>
+                                {% if t.type == 'production' %}
+                                <span class="badge bg-success"><i class="fas fa-industry ms-1" style="font-size:0.6rem;"></i> تولید</span>
+                                {% elif t.type == 'sale' %}
+                                <span class="badge bg-danger"><i class="fas fa-shopping-cart ms-1" style="font-size:0.6rem;"></i> فروش</span>
+                                {% elif t.type == 'purchase' %}
+                                <span class="badge bg-info"><i class="fas fa-box-open ms-1" style="font-size:0.6rem;"></i> خرید</span>
+                                {% elif t.type == 'return' %}
+                                <span class="badge bg-warning"><i class="fas fa-undo ms-1" style="font-size:0.6rem;"></i> برگشت</span>
+                                {% else %}
+                                <span class="badge bg-secondary"><i class="fas fa-edit ms-1" style="font-size:0.6rem;"></i> اصلاح</span>
+                                {% endif %}
+                            </td>
+                            <td style="font-weight:600;">{{ t.quantity }} عدد</td>
+                            <td style="font-size:0.82rem;color:var(--text-muted);">{{ t.reference_type }} #{{ t.reference_id|default:"-" }}</td>
+                            <td style="font-size:0.82rem;color:var(--text-secondary);">{{ t.notes|default:"-" }}</td>
+                            <td style="font-size:0.82rem;color:var(--text-secondary);">{{ t.created_at|to_jalali_datetime }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="empty-state" style="padding:40px;">
+                                <i class="fas fa-inbox d-block mb-2" style="font-size:2rem;"></i>
+                                تراکنشی ثبت نشده
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

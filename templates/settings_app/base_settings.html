@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load jalali_filters %}
+
+{% block page_icon %}cog{% endblock %}
+{% block page_title %}تنظیمات و مدیریت{% endblock %}
+
+{% block content %}
+<!-- Tab Toolbar -->
+<div class="settings-section animate-in" style="padding:10px 14px;margin-bottom:20px;">
+    <ul style="display:flex;gap:4px;list-style:none;margin:0;padding:0;flex-wrap:wrap;">
+        <li><a class="nav-link-tab {% if active_tab == 'general' %}active{% endif %}" href="{% url 'settings_dashboard' %}?tab=general"><i class="fas fa-sliders-h"></i> تنظیمات کلی</a></li>
+        <li><a class="nav-link-tab {% if active_tab == 'costs' %}active{% endif %}" href="{% url 'settings_dashboard' %}?tab=costs"><i class="fas fa-receipt"></i> هزینه‌های ثابت</a></li>
+        <li><a class="nav-link-tab {% if active_tab == 'backup' %}active{% endif %}" href="{% url 'backup_dashboard' %}"><i class="fas fa-database"></i> بک‌آپ</a></li>
+        {% if user.role == 'admin' %}
+        <li><a class="nav-link-tab {% if active_tab == 'users' %}active{% endif %}" href="{% url 'user_list' %}"><i class="fas fa-user-shield"></i> کاربران</a></li>
+        {% endif %}
+        <li><a class="nav-link-tab {% if active_tab == 'updater' %}active{% endif %}" href="{% url 'updater:dashboard' %}"><i class="fas fa-sync-alt"></i> آپدیت سیستم</a></li>
+    </ul>
+</div>
+
+<style>
+.nav-link-tab { padding:8px 18px;border-radius:var(--radius-md);font-size:0.82rem;font-weight:500;cursor:pointer;text-decoration:none;color:var(--text-secondary);transition:var(--transition);display:inline-flex;align-items:center;gap:6px; }
+.nav-link-tab.active { background:var(--accent);color:#fff!important;box-shadow:0 2px 8px rgba(99,102,241,0.3); }
+.nav-link-tab:hover:not(.active) { background:rgba(99,102,241,0.1);color:var(--text-primary)!important; }
+</style>
+
+{% block settings_content %}{% endblock %}
+{% endblock %}

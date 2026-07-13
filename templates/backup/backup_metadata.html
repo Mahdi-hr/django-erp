@@ -1,0 +1,92 @@
+{% extends "settings_app/base_settings.html" %}
+{% load jalali_filters %}
+
+{% block settings_content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 style="margin:0;font-size:1rem;"><i class="fas fa-info-circle ms-2" style="color:var(--accent);"></i> اطلاعات بکاپ</h5>
+    <a href="{% url 'backup_dashboard' %}" class="btn btn-sm btn-outline-secondary"><i class="fas fa-arrow-right ms-1"></i> بازگشت</a>
+</div>
+
+<div class="card animate-in">
+    <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div>
+                <label style="font-size:0.75rem;color:var(--text-muted);">تاریخ ایجاد</label>
+                <div style="font-size:0.9rem;color:var(--text-primary);font-weight:500;">{{ log.created_at|to_jalali }}</div>
+            </div>
+            <div>
+                <label style="font-size:0.75rem;color:var(--text-muted);">نوع عملیات</label>
+                <div style="font-size:0.9rem;color:var(--text-primary);font-weight:500;">{{ log.get_backup_type_display }}</div>
+            </div>
+            <div>
+                <label style="font-size:0.75rem;color:var(--text-muted);">وضعیت</label>
+                <div>
+                    {% if log.status == 'success' %}
+                    <span class="badge" style="background:rgba(16,185,129,0.15);color:#10b981;">موفق</span>
+                    {% elif log.status == 'failed' %}
+                    <span class="badge" style="background:rgba(239,68,68,0.15);color:#ef4444;">ناموفق</span>
+                    {% else %}
+                    <span class="badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;">جزئی</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div>
+                <label style="font-size:0.75rem;color:var(--text-muted);">کاربر</label>
+                <div style="font-size:0.9rem;color:var(--text-primary);font-weight:500;">{{ log.created_by.username|default:"-" }}</div>
+            </div>
+            <div>
+                <label style="font-size:0.75rem;color:var(--text-muted);">نام فایل</label>
+                <div style="font-size:0.9rem;color:var(--text-primary);font-weight:500;font-family:monospace;">{{ log.filename|default:"-" }}</div>
+            </div>
+            <div>
+                <label style="font-size:0.75rem;color:var(--text-muted);">حجم فایل</label>
+                <div style="font-size:0.9rem;color:var(--text-primary);font-weight:500;">
+                    {% if log.file_size > 0 %}{{ log.file_size|filesizeformat }}{% else %}-{% endif %}
+                </div>
+            </div>
+            <div>
+                <label style="font-size:0.75rem;color:var(--text-muted);">نسخه بکاپ</label>
+                <div style="font-size:0.9rem;color:var(--text-primary);font-weight:500;">{{ log.backup_version }}</div>
+            </div>
+            <div>
+                <label style="font-size:0.75rem;color:var(--text-muted);">تعداد کل رکوردها</label>
+                <div style="font-size:0.9rem;color:var(--accent);font-weight:600;">{{ log.record_count }}</div>
+            </div>
+        </div>
+
+        {% if log.backup_type == 'restore_update' or log.backup_type == 'restore_replace' %}
+        <hr style="border-color:var(--border);margin:16px 0;">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+            <div style="text-align:center;padding:12px;background:rgba(16,185,129,0.05);border-radius:var(--radius-sm);">
+                <div style="font-size:1.1rem;font-weight:700;color:var(--success);">{{ log.imported_count }}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);">وارد شده</div>
+            </div>
+            <div style="text-align:center;padding:12px;background:rgba(6,182,212,0.05);border-radius:var(--radius-sm);">
+                <div style="font-size:1.1rem;font-weight:700;color:var(--info);">{{ log.updated_count }}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);">بروزرسانی شده</div>
+            </div>
+            <div style="text-align:center;padding:12px;background:rgba(239,68,68,0.05);border-radius:var(--radius-sm);">
+                <div style="font-size:1.1rem;font-weight:700;color:var(--danger);">{{ log.deleted_count }}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);">حذف شده</div>
+            </div>
+            <div style="text-align:center;padding:12px;background:rgba(245,158,11,0.05);border-radius:var(--radius-sm);">
+                <div style="font-size:1.1rem;font-weight:700;color:var(--warning);">{{ log.error_count }}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);">خطا</div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if log.errors_detail %}
+        <hr style="border-color:var(--border);margin:16px 0;">
+        <label style="font-size:0.75rem;color:var(--text-muted);">جزئیات خطاها</label>
+        <pre style="background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;font-size:0.78rem;color:var(--danger);white-space:pre-wrap;max-height:200px;overflow-y:auto;">{{ log.errors_detail }}</pre>
+        {% endif %}
+
+        {% if metadata %}
+        <hr style="border-color:var(--border);margin:16px 0;">
+        <label style="font-size:0.75rem;color:var(--text-muted);">متادیتای کامل</label>
+        <pre style="background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;font-size:0.75rem;color:var(--text-secondary);white-space:pre-wrap;max-height:300px;overflow-y:auto;">{{ metadata|pprint }}</pre>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

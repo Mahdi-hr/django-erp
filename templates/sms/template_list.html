@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% load jalali_filters %}
+
+{% block title %}لیست قالب‌ها{% endblock %}
+{% block page_icon %}sms{% endblock %}
+{% block page_title %}قالب‌های پیامک{% endblock %}
+
+{% block content %}
+<!-- SMS Nav -->
+<div class="d-flex flex-wrap gap-2 mb-4 animate-in">
+    <a href="{% url 'sms_dashboard' %}" class="btn" style="background:linear-gradient(135deg,#6366f1,#818cf8);color:#fff;border-radius:var(--radius-full);padding:8px 18px;font-size:0.82rem;font-weight:500;display:inline-flex;align-items:center;gap:6px;">
+        <i class="fas fa-home" style="font-size:0.75rem;"></i> داشبورد
+    </a>
+    <a href="{% url 'send_sms' %}" class="btn" style="background:linear-gradient(135deg,#10b981,#34d399);color:#fff;border-radius:var(--radius-full);padding:8px 18px;font-size:0.82rem;font-weight:500;display:inline-flex;align-items:center;gap:6px;">
+        <i class="fas fa-paper-plane" style="font-size:0.75rem;"></i> ارسال تکی
+    </a>
+    <a href="{% url 'send_bulk_sms' %}" class="btn" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#0f172a;border-radius:var(--radius-full);padding:8px 18px;font-size:0.82rem;font-weight:500;display:inline-flex;align-items:center;gap:6px;">
+        <i class="fas fa-users" style="font-size:0.75rem;"></i> ارسال گروهی
+    </a>
+    <a href="{% url 'template_list' %}" class="btn" style="background:linear-gradient(135deg,#06b6d4,#22d3ee);color:#fff;border-radius:var(--radius-full);padding:8px 18px;font-size:0.82rem;font-weight:500;display:inline-flex;align-items:center;gap:6px;">
+        <i class="fas fa-file-alt" style="font-size:0.75rem;"></i> قالب‌ها
+    </a>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 style="margin:0; color:var(--text-primary);"><i class="fas fa-file-alt ms-2" style="color:var(--accent);"></i> قالب‌های پیامک</h5>
+    <a href="{% url 'template_create' %}" class="btn btn-primary">
+        <i class="fas fa-plus ms-1"></i> قالب جدید
+    </a>
+</div>
+
+<!-- Variables Guide -->
+<div class="settings-section animate-in mb-4" style="padding:12px 16px;">
+    <h6 style="font-size:0.82rem;margin-bottom:8px;color:var(--accent);"><i class="fas fa-info-circle ms-1"></i> متغیرهای قابل استفاده در قالب‌ها</h6>
+    <div class="d-flex flex-wrap gap-3" style="font-size:0.78rem;color:var(--text-secondary);">
+        <span><code style="background:rgba(99,102,241,0.1);padding:2px 6px;border-radius:4px;">{customer}</code> نام مشتری</span>
+        <span><code style="background:rgba(99,102,241,0.1);padding:2px 6px;border-radius:4px;">{company}</code> نام شرکت</span>
+        <span><code style="background:rgba(99,102,241,0.1);padding:2px 6px;border-radius:4px;">{phone}</code> شماره تلفن</span>
+        <span><code style="background:rgba(99,102,241,0.1);padding:2px 6px;border-radius:4px;">{products}</code> لیست محصولات</span>
+        <span><code style="background:rgba(99,102,241,0.1);padding:2px 6px;border-radius:4px;">{date}</code> تاریخ امروز</span>
+        <span><code style="background:rgba(99,102,241,0.1);padding:2px 6px;border-radius:4px;">{amount}</code> مبلغ</span>
+        <span><code style="background:rgba(99,102,241,0.1);padding:2px 6px;border-radius:4px;">{invoice_number}</code> شماره فاکتور</span>
+        <span><code style="background:rgba(99,102,241,0.1);padding:2px 6px;border-radius:4px;">{discount}</code> درصد تخفیف</span>
+    </div>
+</div>
+
+<div class="card animate-in">
+    <div class="card-header">
+        <i class="fas fa-list"></i> لیست قالب‌ها
+        <span class="badge bg-primary me-auto">{{ templates|length }} قالب</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>نام</th>
+                    <th>عنوان</th>
+                    <th>پیش‌نمایش</th>
+                    <th>دسته‌بندی</th>
+                    <th>وضعیت</th>
+                    <th>عملیات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in templates %}
+                <tr>
+                    <td style="font-weight:500;">{{ t.name }}</td>
+                    <td>{{ t.title }}</td>
+                    <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.78rem;color:var(--text-muted);">{{ t.body|truncatewords:8 }}</td>
+                    <td>{{ t.get_category_display|default:"-" }}</td>
+                    <td>
+                        {% if t.is_active %}
+                        <span class="badge bg-success"><i class="fas fa-check-circle ms-1" style="font-size:0.6rem;"></i> فعال</span>
+                        {% else %}
+                        <span class="badge bg-danger"><i class="fas fa-times-circle ms-1" style="font-size:0.6rem;"></i> غیرفعال</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'template_edit' t.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{% url 'template_delete' t.pk %}" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="empty-state" style="padding:40px;">
+                        <i class="fas fa-file-alt d-block mb-2" style="font-size:2rem;"></i>
+                        قالبی تعریف نشده
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

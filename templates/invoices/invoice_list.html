@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% load jalali_filters %}
+
+{% block title %}لیست فاکتورها{% endblock %}
+{% block page_icon %}file-invoice{% endblock %}
+{% block page_title %}فاکتورها{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 style="margin:0;"><i class="fas fa-file-invoice ms-2" style="color:var(--accent);"></i> فاکتورها</h5>
+    <a href="{% url 'invoice_create' %}" class="btn btn-primary">
+        <i class="fas fa-plus ms-1"></i> فاکتور جدید
+    </a>
+</div>
+
+<!-- Filter -->
+<div class="card mb-4 animate-in">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">وضعیت</label>
+                <select name="status" class="form-select">
+                    <option value="">همه وضعیت‌ها</option>
+                    <option value="draft" {% if status == 'draft' %}selected{% endif %}>پیش‌نویس</option>
+                    <option value="sent" {% if status == 'sent' %}selected{% endif %}>ارسال شده</option>
+                    <option value="paid" {% if status == 'paid' %}selected{% endif %}>پرداخت شده</option>
+                    <option value="partial" {% if status == 'partial' %}selected{% endif %}>پرداخت جزئی</option>
+                    <option value="cancelled" {% if status == 'cancelled' %}selected{% endif %}>لغو شده</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">نوع</label>
+                <select name="type" class="form-select">
+                    <option value="">همه انواع</option>
+                    <option value="sale" {% if type_filter == 'sale' %}selected{% endif %}>فروش</option>
+                    <option value="return" {% if type_filter == 'return' %}selected{% endif %}>برگشت</option>
+                    <option value="proforma" {% if type_filter == 'proforma' %}selected{% endif %}>پیش‌فاکتور</option>
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-outline-primary w-100">
+                    <i class="fas fa-filter ms-1"></i> فیلتر
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Invoices Table -->
+<div class="card animate-in">
+    <div class="card-header">
+        <i class="fas fa-list"></i> لیست فاکتورها
+        <span class="badge bg-primary me-auto">{{ invoices|length }} فاکتور</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>شماره</th>
+                    <th>مشتری</th>
+                    <th>نوع</th>
+                    <th>تاریخ صدور</th>
+                    <th>مبلغ کل</th>
+                    <th>پرداختی</th>
+                    <th>وضعیت</th>
+                    <th>عملیات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inv in invoices %}
+                <tr>
+                    <td style="font-weight:500;">{{ inv.invoice_number }}</td>
+                    <td>{{ inv.customer.name }}</td>
+                    <td>{{ inv.get_type_display }}</td>
+                    <td>{{ inv.issue_date|to_jalali }}</td>
+                    <td style="font-weight:600;">{{ inv.total|currency_format }}</td>
+                    <td>{{ inv.paid_amount|currency_format }}</td>
+                    <td>
+                        {% if inv.status == 'paid' %}
+                        <span class="badge bg-success"><i class="fas fa-check-circle ms-1" style="font-size:0.6rem;"></i> پرداخت شده</span>
+                        {% elif inv.status == 'partial' %}
+                        <span class="badge bg-warning"><i class="fas fa-hourglass-half ms-1" style="font-size:0.6rem;"></i> پرداخت جزئی</span>
+                        {% elif inv.status == 'draft' %}
+                        <span class="badge bg-secondary"><i class="fas fa-file ms-1" style="font-size:0.6rem;"></i> پیش‌نویس</span>
+                        {% elif inv.status == 'sent' %}
+                        <span class="badge bg-info"><i class="fas fa-paper-plane ms-1" style="font-size:0.6rem;"></i> ارسال شده</span>
+                        {% elif inv.status == 'cancelled' %}
+                        <span class="badge bg-danger"><i class="fas fa-ban ms-1" style="font-size:0.6rem;"></i> لغو شده</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'invoice_detail' inv.pk %}" class="btn btn-sm btn-outline-info">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{% url 'invoice_edit' inv.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{% url 'invoice_delete' inv.pk %}" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="empty-state" style="padding:40px;">
+                        <i class="fas fa-file-invoice d-block mb-2" style="font-size:2rem;"></i>
+                        فاکتوری ثبت نشده
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

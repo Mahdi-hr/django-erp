@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block page_icon %}cogs{% endblock %}
+{% block page_title %}تولید روزانه{% endblock %}
+
+{% block content %}
+<div class="animate-in">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="card cln-card">
+                <div class="card-header">
+                    <h5><i class="fas fa-cogs ms-2"></i> {{ title }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="dailyProdForm">
+                        {% csrf_token %}
+
+                        <!-- Worker & Date -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label">کارگر</label>
+                                <select name="worker" class="form-select" required>
+                                    <option value="">انتخاب کارگر...</option>
+                                    {% for w in workers %}
+                                    <option value="{{ w.pk }}" {% if dp and dp.worker_id == w.pk %}selected{% endif %}>{{ w.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">تاریخ تولید</label>
+                                <input type="date" name="production_date" class="form-control" required value="{{ dp.production_date|date:'Y-m-d'|default:'' }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">یادداشت</label>
+                                <input type="text" name="notes" class="form-control" placeholder="اختیاری" value="{{ dp.notes|default:'' }}">
+                            </div>
+                        </div>
+
+                        <!-- Product Rows -->
+                        <div class="products-header">
+                            <h6><i class="fas fa-box ms-1"></i> محصولات تولید شده</h6>
+                            <button type="button" class="btn btn-sm btn-outline-success" onclick="addRow()">
+                                <i class="fas fa-plus ms-1"></i> افزودن ردیف
+                            </button>
+                        </div>
+
+                        <div id="productRows">
+                            <div class="product-row" data-index="0">
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-6">
+                                        <label class="form-label-sm">محصول</label>
+                                        <select name="product[]" class="form-select form-select-sm" required>
+                                            <option value="">انتخاب محصول...</option>
+                                            {% for p in products %}
+                                            <option value="{{ p.pk }}" {% if dp and dp.product_id == p.pk %}selected{% endif %}>{{ p.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label-sm">تعداد</label>
+                                        <input type="number" name="quantity[]" class="form-control form-control-sm" min="1" value="{{ dp.quantity|default:'1' }}" required>
+                                    </div>
+                                    <div class="col-md-2 d-flex align-items-end">
+                                        <button type="button" class="btn-remove" onclick="removeRow(this)" title="حذف ردیف">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="cln-actions mt-4">
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-save ms-1"></i> ذخیره همه</button>
+                            <a href="{% url 'daily_production_list' %}" class="btn btn-outline-secondary"><i class="fas fa-arrow-right ms-1"></i> بازگشت</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.products-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 14px; margin-bottom: 12px;
+    background: var(--bg-input, #2a3a52); border-radius: 12px;
+    border: 1px solid var(--border, rgba(148,163,184,0.08));
+}
+.products-header h6 { margin: 0; font-size: 0.88rem; font-weight: 600; }
+.product-row {
+    padding: 14px 16px; margin-bottom: 10px;
+    background: var(--bg-card, #2a3a52); border: 1px solid var(--border, rgba(148,163,184,0.08));
+    border-radius: 12px; transition: all 0.2s;
+}
+.product-row:hover { border-color: var(--accent, #6366f1); }
+.form-label-sm { font-size: 0.78rem; margin-bottom: 4px; color: var(--text-secondary); font-weight: 500; }
+.btn-remove {
+    width: 30px; height: 30px; padding: 0; display: flex; align-items: center; justify-content: center;
+    border-radius: 8px; font-size: 0.7rem; border: 1px solid rgba(239,68,68,0.3);
+    color: #ef4444; background: transparent; transition: all 0.2s;
+}
+.btn-remove:hover { background: rgba(239,68,68,0.15); border-color: #ef4444; }
+</style>
+
+<script>
+var productOptions = '<option value="">انتخاب محصول...</option>{% for p in products %}<option value="{{ p.pk }}">{{ p.name }}</option>{% endfor %}';
+var rowIndex = 1;
+
+function addRow() {
+    var html = '<div class="product-row" data-index="' + rowIndex + '">' +
+        '<div class="row g-2 align-items-end">' +
+        '<div class="col-md-6"><label class="form-label-sm">محصول</label>' +
+        '<select name="product[]" class="form-select form-select-sm" required>' + productOptions + '</select></div>' +
+        '<div class="col-md-4"><label class="form-label-sm">تعداد</label>' +
+        '<input type="number" name="quantity[]" class="form-control form-control-sm" min="1" value="1" required></div>' +
+        '<div class="col-md-2 d-flex align-items-end"><button type="button" class="btn-remove" onclick="removeRow(this)" title="حذف ردیف"><i class="fas fa-times"></i></button></div>' +
+        '</div></div>';
+    document.getElementById('productRows').insertAdjacentHTML('beforeend', html);
+    rowIndex++;
+}
+
+function removeRow(btn) {
+    var rows = document.querySelectorAll('.product-row');
+    if (rows.length <= 1) {
+        alert('حداقل یک ردیف محصول باید وجود داشته باشد');
+        return;
+    }
+    btn.closest('.product-row').remove();
+}
+</script>
+{% endblock %}

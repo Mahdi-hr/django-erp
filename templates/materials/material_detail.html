@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load jalali_filters %}
+
+{% block page_icon %}cubes{% endblock %}
+{% block page_title %}جزئیات ماده{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="animate-in">{{ material.name }}</h4>
+    <div class="d-flex gap-2 animate-in">
+        <a href="{% url 'material_edit' material.pk %}" class="btn btn-primary">
+            <i class="fas fa-edit ms-2"></i> ویرایش
+        </a>
+        <a href="{% url 'material_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-right ms-2"></i> بازگشت
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card animate-in">
+            <div class="card-header">
+                <i class="fas fa-info-circle ms-2"></i> اطلاعات پایه
+            </div>
+            <div class="card-body">
+                <table class="table table-hover mb-0">
+                    <tbody>
+                        <tr><td style="width:35%;font-weight:500;">کد:</td><td>{{ material.code }}</td></tr>
+                        <tr><td style="font-weight:500;">نام:</td><td>{{ material.name }}</td></tr>
+                        <tr><td style="font-weight:500;">دسته‌بندی:</td><td>{{ material.category.name }}</td></tr>
+                        <tr><td style="font-weight:500;">واحد:</td><td>{{ material.get_unit_display }}</td></tr>
+                        <tr><td style="font-weight:500;">تامین‌کننده:</td><td>{{ material.supplier|default:"-" }}</td></tr>
+                        <tr><td style="font-weight:500;">قیمت خرید:</td><td>{{ material.purchase_price|currency_format }}</td></tr>
+                        <tr>
+                            <td style="font-weight:500;">موجودی فعلی:</td>
+                            <td class="{% if material.stock_status != 'sufficient' %}fw-bold{% endif %}" style="{% if material.stock_status == 'out_of_stock' %}color:#ef4444;{% elif material.stock_status == 'low' %}color:#f59e0b;{% endif %}">{{ material.current_stock }}</td>
+                        </tr>
+                        <tr><td style="font-weight:500;">حداقل موجودی:</td><td>{{ material.min_stock }}</td></tr>
+                        <tr>
+                            <td style="font-weight:500;">وضعیت:</td>
+                            <td>
+                                {% if material.is_active %}
+                                <span class="badge bg-success">فعال</span>
+                                {% else %}
+                                <span class="badge bg-danger">غیرفعال</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card animate-in">
+            <div class="card-header">
+                <i class="fas fa-history ms-2"></i> تاریخچه قیمت
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>تاریخ</th>
+                            <th>قبلی</th>
+                            <th>جدید</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ph in price_history %}
+                        <tr>
+                            <td>{{ ph.change_date|to_jalali }}</td>
+                            <td>{{ ph.old_price|currency_format }}</td>
+                            <td>{{ ph.new_price|currency_format }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="empty-state text-center" style="padding:30px;">
+                                <i class="fas fa-inbox d-block mb-2"></i> تاریخچه‌ای موجود نیست
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

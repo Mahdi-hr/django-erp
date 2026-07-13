@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% load jalali_filters %}
+
+{% block title %}جزئیات فاکتور - {{ invoice.invoice_number }}{% endblock %}
+{% block page_icon %}file-invoice{% endblock %}
+{% block page_title %}فاکتور {{ invoice.invoice_number }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 style="margin:0; color:var(--text-primary);"><i class="fas fa-file-invoice ms-2" style="color:var(--accent);"></i> فاکتور {{ invoice.invoice_number }}</h5>
+    <div class="d-flex gap-2">
+        <a href="{% url 'invoice_print_dark' invoice.pk %}" class="btn btn-sm" target="_blank" style="background:linear-gradient(135deg,#1a1a2e,#16213e);color:#e94560;border:1px solid rgba(233,69,96,0.3);border-radius:var(--radius-full);font-size:0.78rem;">
+            <i class="fas fa-print ms-1"></i> چاپ دارک
+        </a>
+        <a href="{% url 'invoice_print_light' invoice.pk %}" class="btn btn-sm" target="_blank" style="background:#fff;color:#c0392b;border:1px solid #c0392b;border-radius:var(--radius-full);font-size:0.78rem;">
+            <i class="fas fa-print ms-1"></i> چاپ سفید
+        </a>
+        {% if invoice.status != 'paid' %}
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#paymentModal">
+            <i class="fas fa-money-bill ms-1"></i> ثبت پرداخت
+        </button>
+        {% endif %}
+        <a href="{% url 'invoice_edit' invoice.pk %}" class="btn btn-outline-primary">
+            <i class="fas fa-edit ms-1"></i> ویرایش
+        </a>
+        <a href="{% url 'invoice_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-right ms-1"></i> بازگشت
+        </a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Invoice Info -->
+    <div class="col-md-8">
+        <div class="card animate-in">
+            <div class="card-header">
+                <i class="fas fa-info-circle" style="color:var(--accent);"></i> اطلاعات فاکتور
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label" style="color:var(--text-muted);font-size:0.78rem;">شماره فاکتور</label>
+                        <div style="font-weight:600;color:var(--text-primary);">{{ invoice.invoice_number }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" style="color:var(--text-muted);font-size:0.78rem;">مشتری</label>
+                        <div style="font-weight:500;color:var(--text-primary);">{{ invoice.customer.name }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" style="color:var(--text-muted);font-size:0.78rem;">نوع فاکتور</label>
+                        <div style="color:var(--text-primary);">{{ invoice.get_type_display }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" style="color:var(--text-muted);font-size:0.78rem;">تاریخ صدور</label>
+                        <div style="color:var(--text-primary);">{{ invoice.issue_date|to_jalali }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" style="color:var(--text-muted);font-size:0.78rem;">جمع اقلام</label>
+                        <div style="color:var(--text-primary);font-weight:500;">{{ invoice.subtotal|currency_format }} ریال</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" style="color:var(--text-muted);font-size:0.78rem;">تخفیف</label>
+                        <div style="color:var(--danger);font-weight:500;">{{ invoice.discount_amount|currency_format }} ریال</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" style="color:var(--text-muted);font-size:0.78rem;">مالیات</label>
+                        <div style="color:var(--warning);font-weight:500;">{{ invoice.tax_amount|currency_format }} ریال</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" style="color:var(--text-muted);font-size:0.78rem;">مبلغ کل</label>
+                        <div style="font-weight:700;font-size:1.2rem;color:var(--success);">{{ invoice.total|currency_format }} ریال</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" style="color:var(--text-muted);font-size:0.78rem;">مبلغ پرداختی</label>
+                        <div style="font-weight:600;color:var(--accent);">{{ invoice.paid_amount|currency_format }} ریال</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" style="color:var(--text-muted);font-size:0.78rem;">باقیمانده</label>
+                        <div style="font-weight:600;color:{% if invoice.remaining_amount > 0 %}var(--danger){% else %}var(--success){% endif %};">{{ invoice.remaining_amount|currency_format }} ریال</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" style="color:var(--text-muted);font-size:0.78rem;">روش پرداخت</label>
+                        <div style="color:var(--text-primary);">{{ invoice.payment_method|default:"-" }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" style="color:var(--text-muted);font-size:0.78rem;">وضعیت</label>
+                        <div>
+                            {% if invoice.status == 'paid' %}
+                            <span class="badge bg-success" style="font-size:0.78rem;padding:5px 12px;"><i class="fas fa-check-circle ms-1"></i> پرداخت انجام شده</span>
+                            {% elif invoice.status == 'partial' %}
+                            <span class="badge bg-warning" style="font-size:0.78rem;padding:5px 12px;"><i class="fas fa-hourglass-half ms-1"></i> پرداخت ناقص</span>
+                            {% elif invoice.status == 'draft' %}
+                            <span class="badge bg-secondary" style="font-size:0.78rem;padding:5px 12px;"><i class="fas fa-file ms-1"></i> پرداخت نشده</span>
+                            {% elif invoice.status == 'sent' %}
+                            <span class="badge bg-info" style="font-size:0.78rem;padding:5px 12px;"><i class="fas fa-paper-plane ms-1"></i> ارسال شده</span>
+                            {% elif invoice.status == 'cancelled' %}
+                            <span class="badge bg-danger" style="font-size:0.78rem;padding:5px 12px;"><i class="fas fa-ban ms-1"></i> لغو شده</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoice Items -->
+    <div class="col-md-4">
+        <div class="card animate-in">
+            <div class="card-header">
+                <i class="fas fa-list-ul" style="color:var(--success);"></i> اقلام فاکتور
+                <span class="badge bg-success me-auto">{{ items|length }} ردیف</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>شرح</th>
+                            <th>تعداد</th>
+                            <th>قیمت واحد</th>
+                            <th>جمع</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td style="color:var(--text-primary);">{{ item.description|default:item.product|default:"-" }}</td>
+                            <td style="color:var(--text-primary);">{{ item.quantity }}</td>
+                            <td style="color:var(--text-primary);">{{ item.unit_price|currency_format }}</td>
+                            <td style="font-weight:600;color:var(--accent);">{{ item.total|currency_format }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="empty-state" style="padding:30px;">
+                                <i class="fas fa-inbox d-block mb-2" style="font-size:1.5rem;"></i>
+                                قلمی ثبت نشده
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal fade" id="paymentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background:var(--bg-modal);border:1px solid var(--border);">
+            <form method="post" action="{% url 'invoice_register_payment' invoice.pk %}">
+                {% csrf_token %}
+                <div class="modal-header" style="border-bottom:1px solid var(--border);">
+                    <h5 class="modal-title" style="color:var(--text-primary);"><i class="fas fa-money-bill ms-1" style="color:var(--success);"></i> ثبت پرداخت</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter:invert(1);"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label" style="color:var(--text-secondary);">مبلغ باقیمانده: <strong style="color:var(--danger);">{{ invoice.remaining_amount|currency_format }} ریال</strong></label>
+                        <div class="input-group">
+                            {{ payment_form.amount }}
+                            <button type="button" class="btn btn-outline-success" id="fillRemainingBtn" title="پرداخت کل باقیمانده">
+                                <i class="fas fa-check-double"></i> کل باقیمانده
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" style="color:var(--text-secondary);">روش پرداخت</label>
+                        <select name="method" class="form-select" style="background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);">
+                            <option value="نقدی">نقدی</option>
+                            <option value="چکی">چکی</option>
+                            <option value="کارت به کارت">کارت به کارت</option>
+                            <option value="transfer">انتقال بانکی</option>
+                            <option value="POS">دستگاه POS</option>
+                            <option value="online">پرداخت آنلاین</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top:1px solid var(--border);">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">انصراف</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save ms-1"></i> ثبت پرداخت
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('fillRemainingBtn').addEventListener('click', function() {
+    var amountInput = document.querySelector('#paymentModal input[name="amount"]');
+    amountInput.value = {{ invoice.remaining_amount }};
+    amountInput.focus();
+});
+</script>
+{% endblock %}

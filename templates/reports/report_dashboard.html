@@ -1,0 +1,390 @@
+{% extends "base.html" %}
+{% load jalali_filters %}
+{% load static %}
+
+{% block page_icon %}chart-bar{% endblock %}
+{% block page_title %}داشبورد گزارشات{% endblock %}
+
+{% block extra_css %}
+<style>
+    .rpt-hero { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
+    @media(max-width:992px){ .rpt-hero { grid-template-columns:repeat(2,1fr); } }
+    @media(max-width:576px){ .rpt-hero { grid-template-columns:1fr; } }
+
+    .rpt-stat {
+        background: var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg);
+        padding:18px 20px; position:relative; overflow:hidden; transition:all .25s;
+        backdrop-filter:blur(12px);
+    }
+    .rpt-stat:hover { border-color:var(--border-hover); transform:translateY(-2px); box-shadow:var(--shadow-lg); }
+    .rpt-stat .rpt-stat-icon {
+        width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center;
+        font-size:1rem; margin-bottom:10px;
+    }
+    .rpt-stat .rpt-stat-value { font-size:1.25rem; font-weight:700; color:var(--text-primary); font-variant-numeric:tabular-nums; }
+    .rpt-stat .rpt-stat-label { font-size:0.75rem; color:var(--text-muted); margin-top:2px; }
+    .rpt-stat .rpt-stat-glow {
+        position:absolute; top:-30px; right:-30px; width:100px; height:100px;
+        border-radius:50%; opacity:0.06; pointer-events:none;
+    }
+
+    .rpt-charts { display:grid; grid-template-columns:2fr 1fr; gap:14px; margin-bottom:24px; }
+    @media(max-width:992px){ .rpt-charts { grid-template-columns:1fr; } }
+    .rpt-chart-card {
+        background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg);
+        padding:18px 20px; backdrop-filter:blur(12px);
+    }
+    .rpt-chart-card .chart-title {
+        font-size:0.88rem; font-weight:600; color:var(--text-primary); margin-bottom:14px;
+        display:flex; align-items:center; gap:8px;
+    }
+    .chart-wrap { position:relative; height:220px; }
+
+    .rpt-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
+    @media(max-width:992px){ .rpt-grid { grid-template-columns:repeat(2,1fr); } }
+    @media(max-width:576px){ .rpt-grid { grid-template-columns:1fr; } }
+
+    .rpt-link {
+        display:flex; align-items:center; gap:14px; padding:16px 18px;
+        background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg);
+        text-decoration:none; transition:all .25s; backdrop-filter:blur(12px);
+    }
+    .rpt-link:hover { border-color:var(--accent); transform:translateY(-2px); box-shadow:var(--shadow-lg); }
+    .rpt-link .rpt-link-icon {
+        width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center;
+        font-size:1.1rem; flex-shrink:0;
+    }
+    .rpt-link .rpt-link-text h6 { font-size:0.88rem; font-weight:600; color:var(--text-primary); margin:0 0 3px 0; }
+    .rpt-link .rpt-link-text p { font-size:0.73rem; color:var(--text-muted); margin:0; line-height:1.4; }
+
+    .rpt-recent { margin-bottom:24px; }
+    .rpt-recent-card {
+        background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg);
+        backdrop-filter:blur(12px);
+    }
+    .rpt-recent-card .card-header {
+        background:transparent; border-bottom:1px solid var(--border);
+        padding:14px 20px; font-weight:600; font-size:0.9rem;
+        display:flex; align-items:center; gap:8px; color:var(--text-primary);
+    }
+    .rpt-recent-item {
+        display:flex; align-items:center; gap:12px; padding:10px 20px;
+        border-bottom:1px solid rgba(255,255,255,0.04); transition:background .15s;
+    }
+    .rpt-recent-item:last-child { border-bottom:none; }
+    .rpt-recent-item:hover { background:rgba(255,255,255,0.02); }
+    .rpt-recent-item .rpt-ri-icon {
+        width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+        font-size:0.75rem; flex-shrink:0;
+    }
+    .rpt-recent-item .rpt-ri-text { flex:1; }
+    .rpt-recent-item .rpt-ri-text .ri-title { font-size:0.82rem; color:var(--text-primary); font-weight:500; }
+    .rpt-recent-item .rpt-ri-text .ri-sub { font-size:0.72rem; color:var(--text-muted); }
+    .rpt-recent-item .rpt-ri-value { font-size:0.85rem; font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Summary Stats -->
+<div class="rpt-hero">
+    <div class="rpt-stat animate-in">
+        <div class="rpt-stat-glow" style="background:var(--success);"></div>
+        <div class="rpt-stat-icon" style="background:rgba(16,185,129,0.12);color:var(--success);">
+            <i class="fas fa-shopping-cart"></i>
+        </div>
+        <div class="rpt-stat-value" style="color:var(--success);">{{ total_sales|currency_format }}</div>
+        <div class="rpt-stat-label">کل فروش</div>
+    </div>
+    <div class="rpt-stat animate-in">
+        <div class="rpt-stat-glow" style="background:var(--danger);"></div>
+        <div class="rpt-stat-icon" style="background:rgba(239,68,68,0.12);color:var(--danger);">
+            <i class="fas fa-truck"></i>
+        </div>
+        <div class="rpt-stat-value" style="color:var(--danger);">{{ total_purchases|currency_format }}</div>
+        <div class="rpt-stat-label">کل خرید</div>
+    </div>
+    <div class="rpt-stat animate-in">
+        <div class="rpt-stat-glow" style="background:var(--accent);"></div>
+        <div class="rpt-stat-icon" style="background:rgba(99,102,241,0.12);color:var(--accent);">
+            <i class="fas fa-coins"></i>
+        </div>
+        <div class="rpt-stat-value" style="color:var(--accent);">{{ net_profit|currency_format }}</div>
+        <div class="rpt-stat-label">سود خالص</div>
+    </div>
+    <div class="rpt-stat animate-in">
+        <div class="rpt-stat-glow" style="background:var(--warning);"></div>
+        <div class="rpt-stat-icon" style="background:rgba(245,158,11,0.12);color:var(--warning);">
+            <i class="fas fa-warehouse"></i>
+        </div>
+        <div class="rpt-stat-value" style="color:var(--warning);">{{ inventory_value|currency_format }}</div>
+        <div class="rpt-stat-label">ارزش موجودی انبار</div>
+    </div>
+</div>
+
+<!-- Secondary Stats -->
+<div class="rpt-hero" style="grid-template-columns:repeat(4,1fr);">
+    <div class="rpt-stat animate-in">
+        <div class="rpt-stat-icon" style="background:rgba(6,182,212,0.12);color:var(--info);">
+            <i class="fas fa-file-invoice"></i>
+        </div>
+        <div class="rpt-stat-value">{{ invoice_count }}</div>
+        <div class="rpt-stat-label">تعداد فاکتورها</div>
+    </div>
+    <div class="rpt-stat animate-in">
+        <div class="rpt-stat-icon" style="background:rgba(16,185,129,0.12);color:var(--success);">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="rpt-stat-value">{{ paid_invoices }}</div>
+        <div class="rpt-stat-label">فاکتور پرداخت شده</div>
+    </div>
+    <div class="rpt-stat animate-in">
+        <div class="rpt-stat-icon" style="background:rgba(245,158,11,0.12);color:var(--warning);">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="rpt-stat-value">{{ pending_amount|currency_format }}</div>
+        <div class="rpt-stat-label">مبلغ باقیمانده</div>
+    </div>
+    <div class="rpt-stat animate-in">
+        <div class="rpt-stat-icon" style="background:rgba(139,92,246,0.12);color:#8b5cf6;">
+            <i class="fas fa-box"></i>
+        </div>
+        <div class="rpt-stat-value">{{ product_count }}</div>
+        <div class="rpt-stat-label">تعداد محصولات</div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="rpt-charts">
+    <div class="rpt-chart-card animate-in">
+        <div class="chart-title"><i class="fas fa-chart-area" style="color:var(--accent);"></i> نمودار فروش ماهانه</div>
+        <div class="chart-wrap"><canvas id="salesChart"></canvas></div>
+    </div>
+    <div class="rpt-chart-card animate-in">
+        <div class="chart-title"><i class="fas fa-chart-pie" style="color:var(--info);"></i> توزیع فاکتورها</div>
+        <div class="chart-wrap"><canvas id="invoiceChart"></canvas></div>
+    </div>
+</div>
+
+<!-- Report Links -->
+<div class="rpt-grid">
+    <a href="{% url 'financial_summary' %}" class="rpt-link animate-in">
+        <div class="rpt-link-icon" style="background:rgba(99,102,241,0.12);color:var(--accent);">
+            <i class="fas fa-coins"></i>
+        </div>
+        <div class="rpt-link-text">
+            <h6>خلاصه مالی</h6>
+            <p>فروش، خرید، هزینه تولید و سود خالص</p>
+        </div>
+    </a>
+    <a href="{% url 'invoice_report' %}" class="rpt-link animate-in">
+        <div class="rpt-link-icon" style="background:rgba(6,182,212,0.12);color:var(--info);">
+            <i class="fas fa-file-invoice"></i>
+        </div>
+        <div class="rpt-link-text">
+            <h6>گزارش فاکتورها</h6>
+            <p>لیست فاکتورها با وضعیت پرداخت</p>
+        </div>
+    </a>
+    <a href="{% url 'inventory_report' %}" class="rpt-link animate-in">
+        <div class="rpt-link-icon" style="background:rgba(245,158,11,0.12);color:var(--warning);">
+            <i class="fas fa-warehouse"></i>
+        </div>
+        <div class="rpt-link-text">
+            <h6>موجودی انبار</h6>
+            <p>مواد اولیه و محصولات نهایی</p>
+        </div>
+    </a>
+    <a href="{% url 'profit_report' %}" class="rpt-link animate-in">
+        <div class="rpt-link-icon" style="background:rgba(16,185,129,0.12);color:var(--success);">
+            <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="rpt-link-text">
+            <h6>سود و حاشیه سود</h6>
+            <p>تحلیل سود هر محصول</p>
+        </div>
+    </a>
+    <a href="{% url 'purchase_report' %}" class="rpt-link animate-in">
+        <div class="rpt-link-icon" style="background:rgba(239,68,68,0.12);color:var(--danger);">
+            <i class="fas fa-shopping-cart"></i>
+        </div>
+        <div class="rpt-link-text">
+            <h6>گزارش خرید</h6>
+            <p>سوابق خرید مواد اولیه</p>
+        </div>
+    </a>
+    <a href="{% url 'production_cost_report' %}" class="rpt-link animate-in">
+        <div class="rpt-link-icon" style="background:rgba(139,92,246,0.12);color:#8b5cf6;">
+            <i class="fas fa-industry"></i>
+        </div>
+        <div class="rpt-link-text">
+            <h6>هزینه تولید</h6>
+            <p> سفارشات تکمیل شده و هزینه‌ها</p>
+        </div>
+    </a>
+    <a href="{% url 'material_usage_report' %}" class="rpt-link animate-in">
+        <div class="rpt-link-icon" style="background:rgba(236,72,153,0.12);color:#ec4899;">
+            <i class="fas fa-cubes"></i>
+        </div>
+        <div class="rpt-link-text">
+            <h6>مصرف مواد اولیه</h6>
+            <p>خروج مواد از انبار</p>
+        </div>
+    </a>
+    <a href="{% url 'product_price_list' %}" class="rpt-link animate-in">
+        <div class="rpt-link-icon" style="background:rgba(34,197,94,0.12);color:#22c55e;">
+            <i class="fas fa-tags"></i>
+        </div>
+        <div class="rpt-link-text">
+            <h6>لیست قیمت محصولات</h6>
+            <p>تمام قیمت‌های محصولات</p>
+        </div>
+    </a>
+    <a href="{% url 'price_change_report' %}" class="rpt-link animate-in">
+        <div class="rpt-link-icon" style="background:rgba(245,158,11,0.12);color:var(--warning);">
+            <i class="fas fa-history"></i>
+        </div>
+        <div class="rpt-link-text">
+            <h6>تغییرات قیمت</h6>
+            <p>سابقه تغییرات قیمت مواد</p>
+        </div>
+    </a>
+    <a href="{% url 'worker_report' %}" class="rpt-link animate-in">
+        <div class="rpt-link-icon" style="background:rgba(6,182,212,0.12);color:var(--info);">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="rpt-link-text">
+            <h6>عملکرد کارگران</h6>
+            <p>آمار تولید هر کارگر</p>
+        </div>
+    </a>
+</div>
+
+<!-- Recent Activity -->
+<div class="rpt-recent animate-in">
+    <div class="rpt-recent-card">
+        <div class="card-header"><i class="fas fa-clock" style="color:var(--accent);"></i> آخرین فعالیت‌ها</div>
+        {% for inv in recent_invoices %}
+        <div class="rpt-recent-item">
+            <div class="rpt-ri-icon" style="background:rgba(6,182,212,0.12);color:var(--info);">
+                <i class="fas fa-file-invoice"></i>
+            </div>
+            <div class="rpt-ri-text">
+                <div class="ri-title">فاکتور {{ inv.invoice_number }}</div>
+                <div class="ri-sub">{{ inv.customer.name }} — {{ inv.issue_date|to_jalali }}</div>
+            </div>
+            <div class="rpt-ri-value" style="color:var(--accent);">{{ inv.total|currency_format }}</div>
+        </div>
+        {% empty %}
+        <div class="rpt-recent-item">
+            <div class="rpt-ri-icon" style="background:rgba(148,163,184,0.1);color:var(--text-muted);">
+                <i class="fas fa-inbox"></i>
+            </div>
+            <div class="rpt-ri-text">
+                <div class="ri-title" style="color:var(--text-muted);">فعالیتی ثبت نشده</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Sales Chart
+    var salesCtx = document.getElementById('salesChart');
+    if (salesCtx) {
+        new Chart(salesCtx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: {{ chart_months|safe }},
+                datasets: [{
+                    label: 'فروش',
+                    data: {{ chart_sales|safe }},
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16,185,129,0.08)',
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 2,
+                    pointRadius: 3,
+                    pointBackgroundColor: '#10b981',
+                }, {
+                    label: 'خرید',
+                    data: {{ chart_purchases|safe }},
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239,68,68,0.08)',
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 2,
+                    pointRadius: 3,
+                    pointBackgroundColor: '#ef4444',
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#b0bec5', font: { family: 'Vazirmatn', size: 11 } } },
+                    tooltip: {
+                        backgroundColor: '#1e2a3a',
+                        titleColor: '#e8edf5',
+                        bodyColor: '#b0bec5',
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        borderWidth: 1,
+                        padding: 10,
+                        titleFont: { family: 'Vazirmatn' },
+                        bodyFont: { family: 'Vazirmatn' },
+                        callbacks: {
+                            label: function(ctx) {
+                                return ctx.dataset.label + ': ' + new Intl.NumberFormat('fa-IR').format(Math.round(ctx.raw)) + ' ریال';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { ticks: { color: '#6b7280', font: { family: 'Vazirmatn', size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+                    y: { ticks: { color: '#6b7280', font: { family: 'Vazirmatn', size: 10 }, callback: function(v) { return new Intl.NumberFormat('fa-IR').format(v/1000000) + 'M'; } }, grid: { color: 'rgba(255,255,255,0.04)' } }
+                }
+            }
+        });
+    }
+
+    // Invoice Status Chart
+    var invCtx = document.getElementById('invoiceChart');
+    if (invCtx) {
+        new Chart(invCtx.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['پرداخت شده', 'پرداخت جزئی', 'پیش‌نویس', 'لغو شده'],
+                datasets: [{
+                    data: {{ chart_invoice_stats|safe }},
+                    backgroundColor: ['#10b981', '#f59e0b', '#6b7280', '#ef4444'],
+                    borderColor: '#1e2a3a',
+                    borderWidth: 3,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: '#b0bec5', font: { family: 'Vazirmatn', size: 11 }, padding: 12, usePointStyle: true, pointStyleWidth: 8 }
+                    },
+                    tooltip: {
+                        backgroundColor: '#1e2a3a',
+                        titleColor: '#e8edf5',
+                        bodyColor: '#b0bec5',
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        borderWidth: 1,
+                        titleFont: { family: 'Vazirmatn' },
+                        bodyFont: { family: 'Vazirmatn' },
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

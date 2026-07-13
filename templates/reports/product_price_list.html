@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load jalali_filters %}
+
+{% block page_icon %}chart-bar{% endblock %}
+{% block page_title %}لیست قیمت محصولات{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="animate-in"><i class="fas fa-chart-bar ms-2"></i> لیست قیمت محصولات</h4>
+</div>
+
+<div class="card animate-in">
+    <div class="card-header">
+        <i class="fas fa-tags"></i> لیست قیمت
+        <span class="badge bg-primary me-auto">{{ products|length }} محصول</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>کد</th>
+                    <th>نام</th>
+                    <th>قیمت تمام‌شده</th>
+                    <th>قیمت فروش</th>
+                    <th>قیمت عمده</th>
+                    <th>قیمت جزئی</th>
+                    <th>قیمت نمایندگی</th>
+                    <th>قیمت صادراتی</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in products %}
+                <tr>
+                    <td><code style="background:var(--card-bg);padding:2px 8px;border-radius:6px;">{{ p.code }}</code></td>
+                    <td style="font-weight:500;">{{ p.name }}</td>
+                    <td>{{ p.cost_price|currency_format }}</td>
+                    <td>{{ p.sale_price|currency_format }}</td>
+                    <td>{{ p.wholesale_price|currency_format }}</td>
+                    <td>{{ p.retail_price|currency_format }}</td>
+                    <td>{{ p.dealer_price|currency_format }}</td>
+                    <td>{{ p.export_price|currency_format }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="empty-state" style="padding:40px;">
+                        <i class="fas fa-inbox d-block mb-2"></i> محصولی ثبت نشده
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

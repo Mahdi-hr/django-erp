@@ -1,0 +1,89 @@
+/* ═══ Shared Form Styles ═══ */
+.cln-card { border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 12px; }
+.cln-card .card-header {
+    background: var(--bg-table-header) !important;
+    border-bottom: 1px solid var(--border);
+    padding: 10px 16px;
+    border-radius: var(--radius-md) var(--radius-md) 0 0 !important;
+}
+.cln-card .card-header h5 { font-size: 0.95rem; margin: 0; font-weight: 600; }
+.cln-card .card-body { padding: 14px 16px; }
+.cln-card .form-label { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 4px; font-weight: 500; }
+.cln-card .form-control, .cln-card .form-select {
+    background: var(--bg-input) !important;
+    border: 1px solid var(--border);
+    color: var(--text-primary) !important;
+    border-radius: var(--radius-sm);
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    height: 36px;
+    color-scheme: dark;
+}
+.cln-card .form-control:focus, .cln-card .form-select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(99,102,241,0.15);
+}
+.cln-card textarea.form-control { height: auto; min-height: 60px; padding: 8px 10px; }
+.cln-card .form-check-input { width: 1.1em; height: 1.1em; margin-top: 2px; }
+.cln-card .form-check-label { font-size: 0.85rem; color: var(--text-secondary) !important; }
+
+/* Two-column grid */
+.cln-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+.cln-grid .full-width { grid-column: 1 / -1; }
+@media (max-width: 768px) { .cln-grid { grid-template-columns: 1fr; } }
+
+/* Add row button */
+.cln-btn-add {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 14px; font-size: 0.8rem;
+    border: 1px dashed var(--accent);
+    color: var(--accent-light);
+    background: rgba(99,102,241,0.06);
+    border-radius: var(--radius-sm);
+    cursor: pointer; transition: all 0.2s;
+}
+.cln-btn-add:hover { background: rgba(99,102,241,0.15); color: var(--accent); }
+
+/* Delete button */
+.cln-btn-del {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border: none;
+    background: rgba(239,68,68,0.1); color: #ef4444;
+    border-radius: 6px; cursor: pointer;
+    transition: all 0.2s; font-size: 0.75rem;
+}
+.cln-btn-del:hover { background: rgba(239,68,68,0.25); transform: scale(1.1); }
+
+/* Table inside forms */
+.cln-table { font-size: 0.82rem; }
+.cln-table thead th {
+    background: var(--bg-table-header) !important;
+    color: var(--text-secondary) !important;
+    font-weight: 600;
+    font-size: 0.75rem;
+    padding: 8px 10px;
+    border: none;
+    white-space: nowrap;
+}
+.cln-table tbody td {
+    padding: 5px 6px; vertical-align: middle;
+    border-color: var(--border);
+}
+.cln-table tbody tr { background: var(--bg-table-row) !important; }
+.cln-table tbody tr:hover { background: var(--bg-table-row-hover) !important; }
+.cln-table tbody tr:nth-child(even) { background: rgba(99,102,241,0.03) !important; }
+.cln-table .tbl-sel, .cln-table .tbl-inp {
+    width: 100%; background: var(--bg-input) !important;
+    border: 1px solid var(--border); color: var(--text-primary) !important;
+    border-radius: var(--radius-sm);
+    padding: 4px 8px; font-size: 0.8rem; height: 32px;
+    font-family: inherit;
+    color-scheme: dark;
+}
+.cln-table .tbl-sel:focus, .cln-table .tbl-inp:focus {
+    border-color: var(--accent); outline: none;
+}
+
+/* Actions */
+.cln-actions { display: flex; gap: 8px; margin-top: 14px; }
+.cln-actions .btn { padding: 7px 20px; font-size: 0.85rem; border-radius: var(--radius-sm); }

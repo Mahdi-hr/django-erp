@@ -1,0 +1,274 @@
+{% load jalali_filters %}
+<form method="post" id="themeForm" action="{% url 'settings_dashboard' %}?tab=theme">
+{% csrf_token %}
+<input type="hidden" name="tab" value="theme">
+
+<div class="row g-3">
+<!-- رنگ‌های اصلی -->
+<div class="col-lg-6">
+<div class="settings-section animate-in">
+    <h5><i class="fas fa-palette"></i> رنگ‌های اصلی</h5>
+    <div class="row g-3">
+        <div class="col-6">
+            <label class="form-label">بدنه</label>
+            <div class="d-flex align-items-center gap-2">
+                <span class="color-swatch" id="sw_bg_body" style="width:28px;height:28px;border-radius:6px;background:{{ theme.theme_bg_body }};flex-shrink:0;border:2px solid var(--border);"></span>
+                <input type="text" name="theme_bg_body" value="{{ theme.theme_bg_body }}" class="form-control hex-input" data-css="--bg-body" data-sw="sw_bg_body" maxlength="7" style="font-family:monospace;font-size:0.85rem;direction:ltr;text-align:center;">
+            </div>
+        </div>
+        <div class="col-6">
+            <label class="form-label">کارت‌ها</label>
+            <div class="d-flex align-items-center gap-2">
+                <span class="color-swatch" id="sw_bg_card" style="width:28px;height:28px;border-radius:6px;background:{{ theme.theme_bg_card }};flex-shrink:0;border:2px solid var(--border);"></span>
+                <input type="text" name="theme_bg_card" value="{{ theme.theme_bg_card }}" class="form-control hex-input" data-css="--bg-card" data-sw="sw_bg_card" maxlength="7" style="font-family:monospace;font-size:0.85rem;direction:ltr;text-align:center;">
+            </div>
+        </div>
+        <div class="col-6">
+            <label class="form-label">سایدبار</label>
+            <div class="d-flex align-items-center gap-2">
+                <span class="color-swatch" id="sw_bg_sidebar" style="width:28px;height:28px;border-radius:6px;background:{{ theme.theme_bg_sidebar }};flex-shrink:0;border:2px solid var(--border);"></span>
+                <input type="text" name="theme_bg_sidebar" value="{{ theme.theme_bg_sidebar }}" class="form-control hex-input" data-css="--bg-sidebar" data-sw="sw_bg_sidebar" maxlength="7" style="font-family:monospace;font-size:0.85rem;direction:ltr;text-align:center;">
+            </div>
+        </div>
+        <div class="col-6">
+            <label class="form-label">ورودی‌ها</label>
+            <div class="d-flex align-items-center gap-2">
+                <span class="color-swatch" id="sw_bg_input" style="width:28px;height:28px;border-radius:6px;background:{{ theme.theme_bg_input }};flex-shrink:0;border:2px solid var(--border);"></span>
+                <input type="text" name="theme_bg_input" value="{{ theme.theme_bg_input }}" class="form-control hex-input" data-css="--bg-input" data-sw="sw_bg_input" maxlength="7" style="font-family:monospace;font-size:0.85rem;direction:ltr;text-align:center;">
+            </div>
+        </div>
+        <div class="col-6">
+            <label class="form-label">هدر</label>
+            <div class="d-flex align-items-center gap-2">
+                <span class="color-swatch" id="sw_bg_header" style="width:28px;height:28px;border-radius:6px;background:{{ theme.theme_bg_header|default:'rgba(30,42,58,0.85)' }};flex-shrink:0;border:2px solid var(--border);"></span>
+                <input type="text" name="theme_bg_header" value="{{ theme.theme_bg_header|default:'rgba(30,42,58,0.85)' }}" class="form-control hex-input" data-css="--bg-header" data-sw="sw_bg_header" maxlength="20" style="font-family:monospace;font-size:0.85rem;direction:ltr;text-align:center;">
+            </div>
+        </div>
+        <div class="col-6">
+            <label class="form-label">حاشیه</label>
+            <div class="d-flex align-items-center gap-2">
+                <span class="color-swatch" id="sw_border" style="width:28px;height:28px;border-radius:6px;background:{{ theme.theme_border }};flex-shrink:0;border:2px solid var(--border);"></span>
+                <input type="text" name="theme_border" value="{{ theme.theme_border }}" class="form-control hex-input" data-css="--border" data-sw="sw_border" maxlength="20" style="font-family:monospace;font-size:0.85rem;direction:ltr;text-align:center;">
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- رنگ جدول -->
+<div class="col-lg-6">
+<div class="settings-section animate-in">
+    <h5><i class="fas fa-table"></i> رنگ جدول</h5>
+    <div class="row g-3">
+        <div class="col-6">
+            <label class="form-label">ردیف جدول</label>
+            <div class="d-flex align-items-center gap-2">
+                <span class="color-swatch" id="sw_bg_table_row" style="width:28px;height:28px;border-radius:6px;background:{{ theme.theme_bg_table_row }};flex-shrink:0;border:2px solid var(--border);"></span>
+                <input type="text" name="theme_bg_table_row" value="{{ theme.theme_bg_table_row }}" class="form-control hex-input" data-css="--bg-table-row" data-sw="sw_bg_table_row" maxlength="7" style="font-family:monospace;font-size:0.85rem;direction:ltr;text-align:center;">
+            </div>
+        </div>
+        <div class="col-6">
+            <label class="form-label">هدر جدول</label>
+            <div class="d-flex align-items-center gap-2">
+                <span class="color-swatch" id="sw_bg_table_header" style="width:28px;height:28px;border-radius:6px;background:{{ theme.theme_bg_table_header }};flex-shrink:0;border:2px solid var(--border);"></span>
+                <input type="text" name="theme_bg_table_header" value="{{ theme.theme_bg_table_header }}" class="form-control hex-input" data-css="--bg-table-header" data-sw="sw_bg_table_header" maxlength="10" style="font-family:monospace;font-size:0.85rem;direction:ltr;text-align:center;">
+            </div>
+        </div>
+        <div class="col-6">
+            <label class="form-label">متن جدول</label>
+            <div class="d-flex align-items-center gap-2">
+                <span class="color-swatch" id="sw_text_table" style="width:28px;height:28px;border-radius:6px;background:#1a2332;flex-shrink:0;border:2px solid var(--border);"></span>
+                <input type="text" name="theme_text_table" value="{{ theme.theme_text_table|default:'#1a2332' }}" class="form-control hex-input" data-css="--text-table" data-sw="sw_text_table" maxlength="7" style="font-family:monospace;font-size:0.85rem;direction:ltr;text-align:center;">
+            </div>
+        </div>
+        <div class="col-6">
+            <label class="form-label">حاشیه جدول</label>
+            <div class="d-flex align-items-center gap-2">
+                <span class="color-swatch" id="sw_border_table" style="width:28px;height:28px;border-radius:6px;background:{{ theme.theme_border|default:'rgba(148,163,184,0.08)' }};flex-shrink:0;border:2px solid var(--border);"></span>
+                <input type="text" name="theme_border_table" value="{{ theme.theme_border_table|default:'rgba(148,163,184,0.08)' }}" class="form-control hex-input" data-css="--border" data-sw="sw_border_table" maxlength="20" style="font-family:monospace;font-size:0.85rem;direction:ltr;text-align:center;">
+            </div>
+        </div>
+        <div class="col-6">
+            <label class="form-label">هاور جدول</label>
+            <div class="d-flex align-items-center gap-2">
+                <span class="color-swatch" id="sw_bg_table_row_hover" style="width:28px;height:28px;border-radius:6px;background:{{ theme.theme_bg_table_row_hover|default:'#344a66' }};flex-shrink:0;border:2px solid var(--border);"></span>
+                <input type="text" name="theme_bg_table_row_hover" value="{{ theme.theme_bg_table_row_hover|default:'#344a66' }}" class="form-control hex-input" data-css="--bg-table-row-hover" data-sw="sw_bg_table_row_hover" maxlength="7" style="font-family:monospace;font-size:0.85rem;direction:ltr;text-align:center;">
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- رنگ اکسنت -->
+<div class="col-lg-6">
+<div class="settings-section animate-in">
+    <h5><i class="fas fa-tint"></i> رنگ اکسنت</h5>
+    <div class="row g-3">
+        <div class="col-6">
+            <label class="form-label">اصلی</label>
+            <div class="d-flex align-items-center gap-2">
+                <span class="color-swatch" id="sw_accent" style="width:28px;height:28px;border-radius:6px;background:{{ theme.theme_accent }};flex-shrink:0;border:2px solid var(--border);"></span>
+                <input type="text" name="theme_accent" value="{{ theme.theme_accent }}" class="form-control hex-input" data-css="--accent" data-sw="sw_accent" maxlength="7" style="font-family:monospace;font-size:0.85rem;direction:ltr;text-align:center;">
+            </div>
+        </div>
+        <div class="col-6">
+            <label class="form-label">روشن</label>
+            <div class="d-flex align-items-center gap-2">
+                <span class="color-swatch" id="sw_accent_light" style="width:28px;height:28px;border-radius:6px;background:{{ theme.theme_accent_light }};flex-shrink:0;border:2px solid var(--border);"></span>
+                <input type="text" name="theme_accent_light" value="{{ theme.theme_accent_light }}" class="form-control hex-input" data-css="--accent-light" data-sw="sw_accent_light" maxlength="7" style="font-family:monospace;font-size:0.85rem;direction:ltr;text-align:center;">
+            </div>
+        </div>
+        <div class="col-6">
+            <label class="form-label">موفقیت</label>
+            <div class="d-flex align-items-center gap-2">
+                <span class="color-swatch" id="sw_success" style="width:28px;height:28px;border-radius:6px;background:{{ theme.theme_success }};flex-shrink:0;border:2px solid var(--border);"></span>
+                <input type="text" name="theme_success" value="{{ theme.theme_success }}" class="form-control hex-input" data-css="--success" data-sw="sw_success" maxlength="7" style="font-family:monospace;font-size:0.85rem;direction:ltr;text-align:center;">
+            </div>
+        </div>
+        <div class="col-6">
+            <label class="form-label">خطا</label>
+            <div class="d-flex align-items-center gap-2">
+                <span class="color-swatch" id="sw_danger" style="width:28px;height:28px;border-radius:6px;background:{{ theme.theme_danger }};flex-shrink:0;border:2px solid var(--border);"></span>
+                <input type="text" name="theme_danger" value="{{ theme.theme_danger }}" class="form-control hex-input" data-css="--danger" data-sw="sw_danger" maxlength="7" style="font-family:monospace;font-size:0.85rem;direction:ltr;text-align:center;">
+            </div>
+        </div>
+        <div class="col-6">
+            <label class="form-label">هشدار</label>
+            <div class="d-flex align-items-center gap-2">
+                <span class="color-swatch" id="sw_warning" style="width:28px;height:28px;border-radius:6px;background:{{ theme.theme_warning }};flex-shrink:0;border:2px solid var(--border);"></span>
+                <input type="text" name="theme_warning" value="{{ theme.theme_warning }}" class="form-control hex-input" data-css="--warning" data-sw="sw_warning" maxlength="7" style="font-family:monospace;font-size:0.85rem;direction:ltr;text-align:center;">
+            </div>
+        </div>
+        <div class="col-6">
+            <label class="form-label">اطلاعات</label>
+            <div class="d-flex align-items-center gap-2">
+                <span class="color-swatch" id="sw_info" style="width:28px;height:28px;border-radius:6px;background:{{ theme.theme_info }};flex-shrink:0;border:2px solid var(--border);"></span>
+                <input type="text" name="theme_info" value="{{ theme.theme_info }}" class="form-control hex-input" data-css="--info" data-sw="sw_info" maxlength="7" style="font-family:monospace;font-size:0.85rem;direction:ltr;text-align:center;">
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- رنگ متن -->
+<div class="col-lg-6">
+<div class="settings-section animate-in">
+    <h5><i class="fas fa-font"></i> رنگ متن</h5>
+    <div class="row g-3">
+        <div class="col-6">
+            <label class="form-label">متن اصلی</label>
+            <div class="d-flex align-items-center gap-2">
+                <span class="color-swatch" id="sw_text_primary" style="width:28px;height:28px;border-radius:6px;background:{{ theme.theme_text_primary }};flex-shrink:0;border:2px solid var(--border);"></span>
+                <input type="text" name="theme_text_primary" value="{{ theme.theme_text_primary }}" class="form-control hex-input" data-css="--text-primary" data-sw="sw_text_primary" maxlength="7" style="font-family:monospace;font-size:0.85rem;direction:ltr;text-align:center;">
+            </div>
+        </div>
+        <div class="col-6">
+            <label class="form-label">متن فرعی</label>
+            <div class="d-flex align-items-center gap-2">
+                <span class="color-swatch" id="sw_text_secondary" style="width:28px;height:28px;border-radius:6px;background:{{ theme.theme_text_secondary }};flex-shrink:0;border:2px solid var(--border);"></span>
+                <input type="text" name="theme_text_secondary" value="{{ theme.theme_text_secondary }}" class="form-control hex-input" data-css="--text-secondary" data-sw="sw_text_secondary" maxlength="7" style="font-family:monospace;font-size:0.85rem;direction:ltr;text-align:center;">
+            </div>
+        </div>
+        <div class="col-6">
+            <label class="form-label">متن کم‌رنگ</label>
+            <div class="d-flex align-items-center gap-2">
+                <span class="color-swatch" id="sw_text_muted" style="width:28px;height:28px;border-radius:6px;background:{{ theme.theme_text_muted|default:'#7e93a8' }};flex-shrink:0;border:2px solid var(--border);"></span>
+                <input type="text" name="theme_text_muted" value="{{ theme.theme_text_muted|default:'#7e93a8' }}" class="form-control hex-input" data-css="--text-muted" data-sw="sw_text_muted" maxlength="7" style="font-family:monospace;font-size:0.85rem;direction:ltr;text-align:center;">
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+</div>
+
+<!-- پیش‌نمایش -->
+<div class="settings-section animate-in mt-3">
+    <h5><i class="fas fa-eye"></i> پیش‌نمایش زنده</h5>
+    <div id="pvWrap" style="border-radius:14px;padding:20px;border:1px solid var(--border);background:var(--bg-body);transition:all 0.2s;">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div id="pvCard" style="background:var(--bg-card);border-radius:12px;padding:16px;border:1px solid var(--border);transition:all 0.2s;">
+                    <div style="font-weight:600;margin-bottom:6px;">کارت نمونه</div>
+                    <div style="font-size:0.82rem;">این یک کارت پیش‌نمایش است با رنگ‌های انتخابی شما.</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div style="background:var(--bg-card);border-radius:12px;padding:16px;border:1px solid var(--border);transition:all 0.2s;">
+                    <table style="width:100%;font-size:0.8rem;border-collapse:collapse;">
+                        <thead><tr><th style="padding:6px 10px;background:var(--bg-table-header);border-bottom:2px solid var(--border);color:var(--text-secondary);font-weight:600;"> ردیف</th><th style="padding:6px 10px;background:var(--bg-table-header);border-bottom:2px solid var(--border);color:var(--text-secondary);font-weight:600;">مبلغ</th></tr></thead>
+                        <tbody>
+                            <tr style="background:var(--bg-table-row);"><td style="padding:6px 10px;color:var(--text-table,#1a2332);">ردیف ۱</td><td style="padding:6px 10px;color:var(--text-table,#1a2332);">۱۰۰,۰۰۰</td></tr>
+                            <tr><td style="padding:6px 10px;color:var(--text-table,#1a2332);">ردیف ۲</td><td style="padding:6px 10px;color:var(--text-table,#1a2332);">۲۰۰,۰۰۰</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+                    <span style="background:var(--accent);color:#fff;padding:3px 12px;border-radius:20px;font-size:0.75rem;font-weight:500;">اصلی</span>
+                    <span style="background:var(--success);color:#fff;padding:3px 12px;border-radius:20px;font-size:0.75rem;font-weight:500;">موفقیت</span>
+                    <span style="background:var(--danger);color:#fff;padding:3px 12px;border-radius:20px;font-size:0.75rem;font-weight:500;">خطا</span>
+                    <span style="background:var(--warning);color:#0f172a;padding:3px 12px;border-radius:20px;font-size:0.75rem;font-weight:500;">هشدار</span>
+                    <span style="background:var(--info);color:#fff;padding:3px 12px;border-radius:20px;font-size:0.75rem;font-weight:500;">اطلاعات</span>
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <button type="button" style="background:linear-gradient(135deg,var(--accent),var(--accent-light));color:#fff;padding:6px 16px;border:none;border-radius:10px;font-size:0.8rem;cursor:pointer;">دکمه اصلی</button>
+                    <button type="button" style="background:transparent;color:var(--text-secondary);padding:6px 16px;border:1px solid var(--border);border-radius:10px;font-size:0.8rem;cursor:pointer;">دکمه فرعی</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex gap-2 mt-3">
+    <button type="submit" class="btn btn-primary"><i class="fas fa-save ms-1"></i> ذخیره تنظیمات</button>
+    <button type="button" class="btn btn-outline-secondary" onclick="resetTheme()"><i class="fas fa-undo ms-1"></i> بازنشانی</button>
+</div>
+</form>
+
+<script>
+(function(){
+    var origVals = {};
+    document.querySelectorAll('.hex-input').forEach(function(inp){
+        origVals[inp.name] = inp.value.trim();
+    });
+
+    function ok(v){ return /^#[0-9A-Fa-f]{3,8}$/.test(v.trim()); }
+
+    function applyTheme(){
+        document.querySelectorAll('.hex-input').forEach(function(inp){
+            var v = inp.value.trim();
+            if(!ok(v)) return;
+            var cssVar = inp.dataset.css;
+            var swatchId = inp.dataset.sw;
+            if(cssVar) document.documentElement.style.setProperty(cssVar, v);
+            if(swatchId){
+                var sw = document.getElementById(swatchId);
+                if(sw) sw.style.background = v;
+            }
+        });
+    }
+
+    document.querySelectorAll('.hex-input').forEach(function(inp){
+        inp.addEventListener('input', function(){
+            var v = this.value.trim();
+            if(/^[0-9A-Fa-f]{3,8}$/.test(v)) this.value = '#' + v;
+            applyTheme();
+        });
+        // Initial apply
+        applyTheme();
+    });
+
+    window.resetTheme = function(){
+        for(var k in origVals){
+            var inp = document.querySelector('.hex-input[name="'+k+'"]');
+            if(inp){ inp.value = origVals[k]; }
+        }
+        // Remove inline overrides
+        document.querySelectorAll('.hex-input').forEach(function(inp){
+            var cssVar = inp.dataset.css;
+            if(cssVar) document.documentElement.style.removeProperty(cssVar);
+        });
+    };
+})();
+</script>

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}ورود{% endblock %}
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <div class="logo">
+            <div class="brand-icon"><i class="fas fa-industry"></i></div>
+            <h3>ERP تولید</h3>
+            <p>سیستم مدیریت تولید</p>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">نام کاربری</label>
+                {{ form.username }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label">رمز عبور</label>
+                {{ form.password }}
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-sign-in-alt ms-2"></i> ورود</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

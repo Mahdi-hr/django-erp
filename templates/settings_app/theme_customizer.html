@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+{% load jalali_filters %}
+
+{% block title %}کاستومایزر ظاهر{% endblock %}
+{% block page_icon %}palette{% endblock %}
+{% block page_title %}تنظیمات ظاهر و رنگ‌بندی{% endblock %}
+
+{% block content %}
+<form method="post" id="themeForm">
+{% csrf_token %}
+
+<!-- رنگ‌های اصلی -->
+<div class="settings-section animate-in">
+    <h5><i class="fas fa-palette"></i> رنگ‌های اصلی</h5>
+    <div class="row g-3">
+        <div class="col-md-3">
+            <label class="form-label">رنگ بدنه</label>
+            <div class="d-flex align-items-center gap-2">
+                <input type="color" name="theme_bg_body" value="{{ theme.theme_bg_body }}" class="form-control form-control-color" style="width:50px;height:40px;padding:2px;cursor:pointer;">
+                <input type="text" value="{{ theme.theme_bg_body }}" class="form-control" readonly style="font-family:monospace;font-size:0.8rem;">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">رنگ کارت‌ها</label>
+            <div class="d-flex align-items-center gap-2">
+                <input type="color" name="theme_bg_card" value="{{ theme.theme_bg_card }}" class="form-control form-control-color" style="width:50px;height:40px;padding:2px;cursor:pointer;">
+                <input type="text" value="{{ theme.theme_bg_card }}" class="form-control" readonly style="font-family:monospace;font-size:0.8rem;">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">رنگ سایدبار</label>
+            <div class="d-flex align-items-center gap-2">
+                <input type="color" name="theme_bg_sidebar" value="{{ theme.theme_bg_sidebar }}" class="form-control form-control-color" style="width:50px;height:40px;padding:2px;cursor:pointer;">
+                <input type="text" value="{{ theme.theme_bg_sidebar }}" class="form-control" readonly style="font-family:monospace;font-size:0.8rem;">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">رنگ ردیف جدول</label>
+            <div class="d-flex align-items-center gap-2">
+                <input type="color" name="theme_bg_table_row" value="{{ theme.theme_bg_table_row }}" class="form-control form-control-color" style="width:50px;height:40px;padding:2px;cursor:pointer;">
+                <input type="text" value="{{ theme.theme_bg_table_row }}" class="form-control" readonly style="font-family:monospace;font-size:0.8rem;">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- رنگ‌های اکسنت -->
+<div class="settings-section animate-in">
+    <h5><i class="fas fa-tint"></i> رنگ‌های اکسنت و عملکردی</h5>
+    <div class="row g-3">
+        <div class="col-md-3">
+            <label class="form-label">رنگ اصلی (Primary)</label>
+            <div class="d-flex align-items-center gap-2">
+                <input type="color" name="theme_accent" value="{{ theme.theme_accent }}" class="form-control form-control-color" style="width:50px;height:40px;padding:2px;cursor:pointer;">
+                <input type="text" value="{{ theme.theme_accent }}" class="form-control" readonly style="font-family:monospace;font-size:0.8rem;">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">رنگ اکنت روشن</label>
+            <div class="d-flex align-items-center gap-2">
+                <input type="color" name="theme_accent_light" value="{{ theme.theme_accent_light }}" class="form-control form-control-color" style="width:50px;height:40px;padding:2px;cursor:pointer;">
+                <input type="text" value="{{ theme.theme_accent_light }}" class="form-control" readonly style="font-family:monospace;font-size:0.8rem;">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">رنگ موفقیت (Success)</label>
+            <div class="d-flex align-items-center gap-2">
+                <input type="color" name="theme_success" value="{{ theme.theme_success }}" class="form-control form-control-color" style="width:50px;height:40px;padding:2px;cursor:pointer;">
+                <input type="text" value="{{ theme.theme_success }}" class="form-control" readonly style="font-family:monospace;font-size:0.8rem;">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">رنگ خطا (Danger)</label>
+            <div class="d-flex align-items-center gap-2">
+                <input type="color" name="theme_danger" value="{{ theme.theme_danger }}" class="form-control form-control-color" style="width:50px;height:40px;padding:2px;cursor:pointer;">
+                <input type="text" value="{{ theme.theme_danger }}" class="form-control" readonly style="font-family:monospace;font-size:0.8rem;">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">رنگ هشدار (Warning)</label>
+            <div class="d-flex align-items-center gap-2">
+                <input type="color" name="theme_warning" value="{{ theme.theme_warning }}" class="form-control form-control-color" style="width:50px;height:40px;padding:2px;cursor:pointer;">
+                <input type="text" value="{{ theme.theme_warning }}" class="form-control" readonly style="font-family:monospace;font-size:0.8rem;">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">رنگ اطلاعات (Info)</label>
+            <div class="d-flex align-items-center gap-2">
+                <input type="color" name="theme_info" value="{{ theme.theme_info }}" class="form-control form-control-color" style="width:50px;height:40px;padding:2px;cursor:pointer;">
+                <input type="text" value="{{ theme.theme_info }}" class="form-control" readonly style="font-family:monospace;font-size:0.8rem;">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- رنگ متن -->
+<div class="settings-section animate-in">
+    <h5><i class="fas fa-font"></i> رنگ متن</h5>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label">متن اصلی</label>
+            <div class="d-flex align-items-center gap-2">
+                <input type="color" name="theme_text_primary" value="{{ theme.theme_text_primary }}" class="form-control form-control-color" style="width:50px;height:40px;padding:2px;cursor:pointer;">
+                <input type="text" value="{{ theme.theme_text_primary }}" class="form-control" readonly style="font-family:monospace;font-size:0.8rem;">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">متن فرعی</label>
+            <div class="d-flex align-items-center gap-2">
+                <input type="color" name="theme_text_secondary" value="{{ theme.theme_text_secondary }}" class="form-control form-control-color" style="width:50px;height:40px;padding:2px;cursor:pointer;">
+                <input type="text" value="{{ theme.theme_text_secondary }}" class="form-control" readonly style="font-family:monospace;font-size:0.8rem;">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">رنگ ورودی‌ها</label>
+            <div class="d-flex align-items-center gap-2">
+                <input type="color" name="theme_bg_input" value="{{ theme.theme_bg_input }}" class="form-control form-control-color" style="width:50px;height:40px;padding:2px;cursor:pointer;">
+                <input type="text" value="{{ theme.theme_bg_input }}" class="form-control" readonly style="font-family:monospace;font-size:0.8rem;">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- تنظیمات عمومی -->
+<div class="settings-section animate-in">
+    <h5><i class="fas fa-sliders-h"></i> تنظیمات عمومی</h5>
+    <div class="row g-3">
+        <div class="col-md-3">
+            <label class="form-label">گوشه کارت‌ها (px)</label>
+            <input type="number" name="theme_card_radius" value="{{ theme.theme_card_radius }}" class="form-control" min="0" max="40">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">میزان بلور شیشه‌ای</label>
+            <input type="number" name="theme_card_blur" value="{{ theme.theme_card_blur }}" class="form-control" min="0" max="30">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">اندازه فونت (px)</label>
+            <input type="number" name="theme_font_size" value="{{ theme.theme_font_size }}" class="form-control" min="12" max="20">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">استایل سایدبار</label>
+            <select name="theme_sidebar_style" class="form-select">
+                <option value="gradient" {% if theme.theme_sidebar_style == 'gradient' %}selected{% endif %}>گرادیانت</option>
+                <option value="solid" {% if theme.theme_sidebar_style == 'solid' %}selected{% endif %}>یکدست</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- پیش‌نمایش زنده -->
+<div class="settings-section animate-in">
+    <h5><i class="fas fa-eye"></i> پیش‌نمایش زنده</h5>
+    <div id="livePreview" style="border-radius:var(--radius-lg);padding:20px;border:1px solid var(--border);">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div style="background:var(--bg-card);border-radius:var(--radius-md);padding:16px;border:1px solid var(--border);">
+                    <div style="font-weight:600;margin-bottom:8px;">کارت نمونه</div>
+                    <div style="font-size:0.85rem;color:var(--text-secondary);">این یک کارت پیش‌نمایش است با رنگ‌های انتخابی شما.</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div style="background:var(--bg-card);border-radius:var(--radius-md);padding:16px;border:1px solid var(--border);">
+                    <table style="width:100%;font-size:0.8rem;">
+                        <tr style="background:var(--bg-table-row);"><td style="padding:6px 10px;color:var(--text-table,#e8dcc8);">ردیف ۱</td><td style="padding:6px 10px;color:var(--text-table,#e8dcc8);">۱۰۰,۰۰۰</td></tr>
+                        <tr style="background:var(--bg-table-row);"><td style="padding:6px 10px;color:var(--text-table,#e8dcc8);">ردیف ۲</td><td style="padding:6px 10px;color:var(--text-table,#e8dcc8);">۲۰۰,۰۰۰</td></tr>
+                    </table>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <span class="badge bg-primary">اصلی</span>
+                    <span class="badge bg-success">موفقیت</span>
+                    <span class="badge bg-danger">خطا</span>
+                    <span class="badge bg-warning">هشدار</span>
+                    <span class="badge bg-info">اطلاعات</span>
+                </div>
+                <div style="margin-top:12px;display:flex;gap:8px;">
+                    <button type="button" class="btn btn-primary btn-sm">دکمه اصلی</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm">دکمه فرعی</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary"><i class="fas fa-save ms-1"></i> ذخیره تنظیمات</button>
+    <a href="{% url 'settings_dashboard' %}" class="btn btn-outline-secondary"><i class="fas fa-arrow-right ms-1"></i> بازگشت</a>
+</div>
+
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('input[type="color"]').forEach(function(input) {
+    input.addEventListener('input', function() {
+        var textInput = this.nextElementSibling;
+        if (textInput) textInput.value = this.value;
+        applyLivePreview();
+    });
+});
+
+document.querySelectorAll('input[type="number"], select').forEach(function(input) {
+    input.addEventListener('change', applyLivePreview);
+});
+
+function applyLivePreview() {
+    var form = document.getElementById('themeForm');
+    var data = new FormData(form);
+    var preview = document.getElementById('livePreview');
+    if (preview) {
+        preview.style.background = data.get('theme_bg_body') || '#1e2a3a';
+    }
+}
+
+// Sync color inputs with text inputs
+document.querySelectorAll('.form-control-color').forEach(function(colorInput) {
+    var textInput = colorInput.parentElement.querySelector('.form-control:not(.form-control-color)');
+    if (textInput) {
+        textInput.addEventListener('change', function() {
+            if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) {
+                colorInput.value = this.value;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

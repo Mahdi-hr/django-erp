@@ -1,0 +1,212 @@
+{% load static %}
+{% load jalali_filters %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }} - {{ company.name }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @page { size: A4 portrait; margin: 10mm 12mm; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Vazirmatn', sans-serif; background: #fff; color: #1a1a2e; direction: rtl; font-size: 11px; }
+        .container { max-width: 210mm; margin: 0 auto; padding: 8mm 10mm; }
+
+        /* ═══ HEADER ═══ */
+        .header {
+            background: linear-gradient(135deg, #b91c1c 0%, #dc2626 40%, #ef4444 100%);
+            color: #fff; border-radius: 14px; padding: 20px 24px;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 16px; position: relative; overflow: hidden;
+        }
+        .header::before {
+            content: ''; position: absolute; top: -40%; right: -8%; width: 180px; height: 180px;
+            background: rgba(255,255,255,0.06); border-radius: 50%;
+        }
+        .header::after {
+            content: ''; position: absolute; bottom: -50%; left: 8%; width: 140px; height: 140px;
+            background: rgba(255,255,255,0.04); border-radius: 50%;
+        }
+        .header-right { display: flex; align-items: center; gap: 14px; z-index: 1; }
+        .logo-circle {
+            width: 58px; height: 58px; border-radius: 50%; background: rgba(255,255,255,0.15);
+            border: 2px solid rgba(255,255,255,0.3); display: flex; align-items: center;
+            justify-content: center; font-size: 1.5rem; flex-shrink: 0; backdrop-filter: blur(4px);
+        }
+        .logo-circle img { width: 42px; height: 42px; object-fit: contain; }
+        .company-name { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.5px; }
+        .company-sub { font-size: 0.7rem; opacity: 0.8; margin-top: 2px; }
+        .company-contact { display: flex; gap: 14px; margin-top: 6px; }
+        .company-contact span { font-size: 0.65rem; opacity: 0.8; display: flex; align-items: center; gap: 4px; }
+        .header-left { text-align: left; z-index: 1; }
+        .badge-title {
+            background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+            padding: 10px 24px; border-radius: 10px; font-size: 1rem; font-weight: 700;
+            backdrop-filter: blur(4px);
+        }
+        .badge-sub { font-size: 0.7rem; opacity: 0.75; margin-top: 6px; text-align: left; }
+
+        /* ═══ STATS ═══ */
+        .stats-bar { display: flex; gap: 8px; margin-bottom: 14px; }
+        .stat-chip {
+            flex: 1; background: #fff; border: 1px solid #fecaca; border-radius: 10px;
+            padding: 10px 12px; display: flex; align-items: center; gap: 10px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        }
+        .stat-icon {
+            width: 36px; height: 36px; border-radius: 10px; display: flex;
+            align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0;
+        }
+        .stat-icon.red { background: rgba(220,38,38,0.1); color: #dc2626; }
+        .stat-icon.green { background: rgba(22,163,74,0.1); color: #16a34a; }
+        .stat-icon.blue { background: rgba(37,99,235,0.1); color: #2563eb; }
+        .stat-icon.amber { background: rgba(217,119,6,0.1); color: #d97706; }
+        .stat-text .stat-val { font-size: 1.05rem; font-weight: 800; color: #1a1a2e; }
+        .stat-text .stat-label { font-size: 0.62rem; color: #999; }
+
+        /* ═══ TABLE ═══ */
+        .table-wrap {
+            border: 1px solid #fecaca; border-radius: 12px; overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05); margin-bottom: 16px;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        thead th {
+            background: linear-gradient(135deg, #b91c1c, #dc2626);
+            color: #fff; padding: 10px 8px; font-size: 0.72rem; font-weight: 700;
+            text-align: center; letter-spacing: 0.3px;
+        }
+        thead th:first-child { border-radius: 0 0 0 12px; }
+        thead th:last-child { border-radius: 0 0 12px 0; }
+        tbody td {
+            padding: 8px 6px; border-bottom: 1px solid #fef2f2; font-size: 0.76rem;
+            text-align: center; color: #333; transition: background 0.15s;
+        }
+        tbody tr:hover td { background: #fff5f5 !important; }
+        tbody tr:nth-child(even) td { background: #fefcfc; }
+        tbody tr:last-child td { border-bottom: none; }
+        .col-name { text-align: right; font-weight: 600; color: #1a1a2e; }
+        .col-code { font-weight: 700; color: #dc2626; font-family: monospace; font-size: 0.72rem; }
+        .col-price { font-weight: 800; color: #dc2626; direction: ltr; font-size: 0.78rem; }
+        .col-cost { color: #666; direction: ltr; font-size: 0.7rem; }
+        .col-profit { color: #d97706; font-weight: 700; }
+        .col-mult { direction: ltr; font-size: 0.7rem; color: #555; }
+        .col-stock { font-weight: 700; direction: ltr; }
+        .row-num { color: #ccc; font-weight: 600; font-size: 0.68rem; }
+
+        .status-pill {
+            display: inline-flex; align-items: center; gap: 3px; padding: 2px 10px;
+            border-radius: 12px; font-size: 0.62rem; font-weight: 700;
+        }
+        .status-ok { background: rgba(22,163,74,0.1); color: #16a34a; }
+        .status-low { background: rgba(217,119,6,0.1); color: #d97706; }
+        .status-out { background: rgba(220,38,38,0.1); color: #dc2626; }
+
+        /* ═══ FOOTER ═══ */
+        .footer {
+            margin-top: 14px; padding-top: 12px; border-top: 2px solid #fecaca;
+            display: flex; justify-content: space-between; align-items: flex-end;
+        }
+        .footer-left { font-size: 0.65rem; color: #999; line-height: 1.6; }
+        .signatures { display: flex; gap: 28px; }
+        .sig-box { text-align: center; }
+        .sig-line { width: 100px; height: 1px; background: #fca5a5; margin-bottom: 4px; }
+        .sig-label { font-size: 0.6rem; color: #bbb; }
+
+        .watermark {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: 4rem; font-weight: 900; color: rgba(220,38,38,0.03);
+            pointer-events: none; z-index: 0; white-space: nowrap;
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .container { padding: 0; }
+            .watermark { display: none; }
+        }
+        @media screen {
+            .container { box-shadow: 0 4px 40px rgba(0,0,0,0.08); margin: 20px auto; border-radius: 14px; border: 1px solid #fecaca; }
+        }
+    </style>
+</head>
+<body>
+    <div class="watermark">{{ company.name }}</div>
+
+    <div class="no-print" style="text-align:center;padding:12px;background:linear-gradient(135deg,#fff5f5,#fff);border-bottom:1px solid #fecaca;">
+        <button onclick="window.print()" style="background:linear-gradient(135deg,#b91c1c,#dc2626);color:#fff;border:none;padding:10px 32px;border-radius:10px;font-family:inherit;font-size:0.9rem;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(220,38,38,0.3);">
+            <i class="fas fa-print"></i> چاپ گزارش
+        </button>
+        <a href="{{ back_url }}" style="background:#fff;color:#dc2626;border:1px solid #fecaca;padding:10px 24px;border-radius:10px;font-family:inherit;font-size:0.9rem;display:inline-flex;align-items:center;gap:8px;margin-right:8px;text-decoration:none;">
+            <i class="fas fa-arrow-right"></i> بازگشت
+        </a>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-right">
+                <div class="logo-circle">
+                    {% if company.logo %}<img src="/media/logos/{{ company.logo }}">{% else %}<i class="fas fa-{{ icon }}"></i>{% endif %}
+                </div>
+                <div>
+                    <div class="company-name">{{ company.name }}</div>
+                    <div class="company-sub">سیستم مدیریت تولید صنعتی</div>
+                    <div class="company-contact">
+                        {% if company.phone %}<span><i class="fas fa-phone"></i> {{ company.phone }}</span>{% endif %}
+                        {% if company.address %}<span><i class="fas fa-map-marker-alt"></i> {{ company.address }}</span>{% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="header-left">
+                <div class="badge-title"><i class="fas fa-{{ icon }} ms-1"></i> {{ title }}</div>
+                <div class="badge-sub">{{ subtitle }}</div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-bar">
+            <div class="stat-chip">
+                <div class="stat-icon red"><i class="fas fa-{{ icon }}"></i></div>
+                <div class="stat-text"><div class="stat-val">{{ total_count }}</div><div class="stat-label">{{ count_label }}</div></div>
+            </div>
+            <div class="stat-chip">
+                <div class="stat-icon green"><i class="fas fa-calendar-check"></i></div>
+                <div class="stat-text"><div class="stat-val">{{ jalali_date }}</div><div class="stat-label">تاریخ چاپ</div></div>
+            </div>
+            <div class="stat-chip">
+                <div class="stat-icon blue"><i class="fas fa-clock"></i></div>
+                <div class="stat-text"><div class="stat-val">{{ jalali_time }}</div><div class="stat-label">ساعت چاپ</div></div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        {{ header_html|safe }}
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ body_html|safe }}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-left">
+                {{ company.name }}<br>
+                {% if company.phone %}تلفن: {{ company.phone }}<br>{% endif %}
+                {% if company.address %}آدرس: {{ company.address }}<br>{% endif %}
+                تاریخ چاپ: {{ jalali_date }} — ساعت: {{ jalali_time }}
+            </div>
+            <div class="signatures">
+                <div class="sig-box"><div class="sig-line"></div><div class="sig-label">مهر و امضا</div></div>
+                <div class="sig-box"><div class="sig-line"></div><div class="sig-label">تایید مدیریت</div></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

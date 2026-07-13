@@ -1,0 +1,239 @@
+{% load static %}
+{% load jalali_filters %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>گزارش مواد اولیه - {{ company.name }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @page { size: A4 landscape; margin: 8mm; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Vazirmatn', sans-serif; background: #fff; color: #1a1a2e; direction: rtl; font-size: 11px; }
+        .container { max-width: 297mm; margin: 0 auto; padding: 6mm 8mm; }
+
+        /* ═══ HEADER ═══ */
+        .header {
+            background: linear-gradient(135deg, #c0392b 0%, #e74c3c 50%, #c0392b 100%);
+            color: #fff; border-radius: 12px; padding: 16px 24px;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 14px; position: relative; overflow: hidden;
+        }
+        .header::before {
+            content: ''; position: absolute; top: -50%; right: -10%; width: 200px; height: 200px;
+            background: rgba(255,255,255,0.05); border-radius: 50%;
+        }
+        .header::after {
+            content: ''; position: absolute; bottom: -60%; left: 5%; width: 150px; height: 150px;
+            background: rgba(255,255,255,0.04); border-radius: 50%;
+        }
+        .header-right { display: flex; align-items: center; gap: 14px; z-index: 1; }
+        .logo-circle {
+            width: 56px; height: 56px; border-radius: 50%; background: rgba(255,255,255,0.15);
+            border: 2px solid rgba(255,255,255,0.3); display: flex; align-items: center;
+            justify-content: center; font-size: 1.4rem; flex-shrink: 0; backdrop-filter: blur(4px);
+        }
+        .logo-circle img { width: 40px; height: 40px; object-fit: contain; }
+        .company-name { font-size: 1.3rem; font-weight: 800; letter-spacing: -0.5px; }
+        .company-sub { font-size: 0.68rem; opacity: 0.8; margin-top: 2px; }
+        .company-contact { display: flex; gap: 14px; margin-top: 6px; }
+        .company-contact span { font-size: 0.65rem; opacity: 0.8; display: flex; align-items: center; gap: 4px; }
+        .header-left { text-align: left; z-index: 1; }
+        .badge-title {
+            background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+            padding: 8px 22px; border-radius: 8px; font-size: 0.9rem; font-weight: 700;
+            backdrop-filter: blur(4px); letter-spacing: 0.5px;
+        }
+        .badge-sub { font-size: 0.68rem; opacity: 0.75; margin-top: 6px; text-align: left; }
+
+        /* ═══ STATS BAR ═══ */
+        .stats-bar { display: flex; gap: 8px; margin-bottom: 12px; }
+        .stat-chip {
+            flex: 1; background: #fff; border: 1px solid #fde2e2; border-radius: 8px;
+            padding: 8px 12px; display: flex; align-items: center; gap: 8px;
+        }
+        .stat-chip:hover { border-color: #e74c3c; }
+        .stat-icon {
+            width: 32px; height: 32px; border-radius: 8px; display: flex;
+            align-items: center; justify-content: center; font-size: 0.8rem; flex-shrink: 0;
+        }
+        .stat-icon.red { background: rgba(231,76,60,0.1); color: #e74c3c; }
+        .stat-icon.green { background: rgba(39,174,96,0.1); color: #27ae60; }
+        .stat-icon.blue { background: rgba(52,152,219,0.1); color: #3498db; }
+        .stat-icon.orange { background: rgba(243,156,18,0.1); color: #f39c12; }
+        .stat-text .stat-val { font-size: 1rem; font-weight: 800; color: #1a1a2e; }
+        .stat-text .stat-label { font-size: 0.62rem; color: #999; }
+
+        /* ═══ TABLE ═══ */
+        .table-wrap {
+            border: 1px solid #fde2e2; border-radius: 10px; overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+        }
+        table { width: 100%; border-collapse: collapse; }
+        thead th {
+            background: linear-gradient(135deg, #c0392b, #e74c3c);
+            color: #fff; padding: 9px 6px; font-size: 0.68rem; font-weight: 700;
+            text-align: center; letter-spacing: 0.3px;
+        }
+        thead th:first-child { border-radius: 0 0 0 10px; }
+        thead th:last-child { border-radius: 0 0 10px 0; }
+        tbody td {
+            padding: 7px 6px; border-bottom: 1px solid #fef0f0; font-size: 0.72rem;
+            text-align: center; color: #333; transition: background 0.15s;
+        }
+        tbody tr:hover td { background: #fff5f5 !important; }
+        tbody tr:nth-child(even) td { background: #fefcfc; }
+        tbody tr:last-child td { border-bottom: none; }
+        .col-name { text-align: right; font-weight: 600; color: #1a1a2e; }
+        .col-code { font-weight: 700; color: #c0392b; font-family: monospace; font-size: 0.7rem; }
+        .col-price { font-weight: 800; color: #c0392b; direction: ltr; font-size: 0.75rem; }
+        .col-stock { font-weight: 700; direction: ltr; }
+        .row-num { color: #ccc; font-weight: 600; font-size: 0.65rem; }
+
+        .status-pill {
+            display: inline-flex; align-items: center; gap: 3px; padding: 2px 10px;
+            border-radius: 12px; font-size: 0.62rem; font-weight: 700;
+        }
+        .status-ok { background: rgba(39,174,96,0.1); color: #27ae60; }
+        .status-low { background: rgba(243,156,18,0.1); color: #f39c12; }
+        .status-out { background: rgba(231,76,60,0.1); color: #e74c3c; }
+
+        /* ═══ FOOTER ═══ */
+        .footer {
+            margin-top: 12px; padding-top: 10px; border-top: 2px solid #fde2e2;
+            display: flex; justify-content: space-between; align-items: flex-end;
+        }
+        .footer-left { font-size: 0.62rem; color: #999; }
+        .signatures { display: flex; gap: 30px; }
+        .sig-box { text-align: center; }
+        .sig-line { width: 100px; height: 1px; background: #f5c6c6; margin-bottom: 4px; }
+        .sig-label { font-size: 0.58rem; color: #bbb; }
+
+        .watermark {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: 5rem; font-weight: 900; color: rgba(231,76,60,0.03);
+            pointer-events: none; z-index: 0; white-space: nowrap;
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: #fff; }
+            .container { padding: 0; }
+            .watermark { display: none; }
+        }
+        @media screen {
+            .container { box-shadow: 0 4px 40px rgba(0,0,0,0.08); margin: 20px auto; border-radius: 12px; border: 1px solid #fde2e2; }
+        }
+    </style>
+</head>
+<body>
+    <div class="watermark">{{ company.name }}</div>
+
+    <div class="no-print" style="text-align:center;padding:12px;background:linear-gradient(135deg,#fff5f5,#fff);border-bottom:1px solid #fde2e2;">
+        <button onclick="window.print()" style="background:linear-gradient(135deg,#c0392b,#e74c3c);color:#fff;border:none;padding:10px 32px;border-radius:8px;font-family:inherit;font-size:0.9rem;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(231,76,60,0.3);">
+            <i class="fas fa-print"></i> چاپ گزارش
+        </button>
+        <a href="{% url 'material_list' %}" style="background:#fff;color:#c0392b;border:1px solid #fde2e2;padding:10px 24px;border-radius:8px;font-family:inherit;font-size:0.9rem;display:inline-flex;align-items:center;gap:8px;margin-right:8px;text-decoration:none;">
+            <i class="fas fa-arrow-right"></i> بازگشت
+        </a>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-right">
+                <div class="logo-circle">
+                    {% if company.logo %}<img src="/media/logos/{{ company.logo }}">{% else %}<i class="fas fa-cubes"></i>{% endif %}
+                </div>
+                <div>
+                    <div class="company-name">{{ company.name }}</div>
+                    <div class="company-sub">سیستم مدیریت تولید صنعتی</div>
+                    <div class="company-contact">
+                        {% if company.phone %}<span><i class="fas fa-phone"></i> {{ company.phone }}</span>{% endif %}
+                        {% if company.address %}<span><i class="fas fa-map-marker-alt"></i> {{ company.address }}</span>{% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="header-left">
+                <div class="badge-title"><i class="fas fa-cubes ms-1"></i> مواد اولیه</div>
+                <div class="badge-sub">گزارش جامع — موجودی و قیمت</div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-bar">
+            <div class="stat-chip">
+                <div class="stat-icon red"><i class="fas fa-cubes"></i></div>
+                <div class="stat-text"><div class="stat-val">{{ materials|length }}</div><div class="stat-label">تعداد مواد</div></div>
+            </div>
+            <div class="stat-chip">
+                <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
+                <div class="stat-text"><div class="stat-val">{{ materials|length|add:out_count|add:low_count|add:"-0" }}</div><div class="stat-label">کافی</div></div>
+            </div>
+            <div class="stat-chip">
+                <div class="stat-icon orange"><i class="fas fa-exclamation-triangle"></i></div>
+                <div class="stat-text"><div class="stat-val">{{ low_count }}</div><div class="stat-label">کمبود</div></div>
+            </div>
+            <div class="stat-chip">
+                <div class="stat-icon red"><i class="fas fa-times-circle"></i></div>
+                <div class="stat-text"><div class="stat-val">{{ out_count }}</div><div class="stat-label">ناموجود</div></div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:28px;">#</th>
+                        <th style="width:55px;">کد</th>
+                        <th>نام ماده</th>
+                        <th style="width:80px;">دسته‌بندی</th>
+                        <th style="width:45px;">واحد</th>
+                        <th style="width:75px;">قیمت خرید</th>
+                        <th style="width:50px;">موجودی</th>
+                        <th style="width:50px;">حداقل</th>
+                        <th style="width:60px;">وضعیت</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in materials %}
+                    <tr>
+                        <td class="row-num">{{ forloop.counter }}</td>
+                        <td class="col-code">{{ m.code }}</td>
+                        <td class="col-name">{{ m.name }}</td>
+                        <td>{{ m.category.name }}</td>
+                        <td>{{ m.get_unit_display_fa }}</td>
+                        <td class="col-price">{{ m.purchase_price|currency_format }}</td>
+                        <td class="col-stock" style="{% if m.stock_status == 'out_of_stock' %}color:#e74c3c;{% elif m.stock_status == 'low' %}color:#f39c12;{% else %}color:#27ae60;{% endif %}">{{ m.current_stock }}</td>
+                        <td>{{ m.min_stock }}</td>
+                        <td>
+                            {% if m.stock_status == 'out_of_stock' %}
+                            <span class="status-pill status-out"><i class="fas fa-times-circle" style="font-size:0.55rem;"></i> ناموجود</span>
+                            {% elif m.stock_status == 'low' %}
+                            <span class="status-pill status-low"><i class="fas fa-exclamation-triangle" style="font-size:0.55rem;"></i> کمبود</span>
+                            {% else %}
+                            <span class="status-pill status-ok"><i class="fas fa-check-circle" style="font-size:0.55rem;"></i> کافی</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-left">
+                {{ company.name }} — {{ company.address }} — {{ company.phone }}
+                <br>تاریخ چاپ: {% now "Y/m/d H:i" %}
+            </div>
+            <div class="signatures">
+                <div class="sig-box"><div class="sig-line"></div><div class="sig-label">مهر و امضا</div></div>
+                <div class="sig-box"><div class="sig-line"></div><div class="sig-label">تایید مدیریت</div></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

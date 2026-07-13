@@ -1,0 +1,37 @@
+# Django ERP - Requirements
+# Production dependencies
+
+# Core
+Django>=5.2
+psycopg2-binary>=2.9
+python-dotenv>=1.0
+
+# Forms & UI
+django-crispy-forms>=2.6
+crispy-bootstrap5>=2026.3
+django-filter>=25.2
+
+# Async & Cache
+celery>=5.6
+django-celery-beat>=2.9
+django-redis>=7.0
+redis>=8.0
+
+# Date & Time
+jdatetime>=5.3
+
+# PDF & Excel
+xhtml2pdf>=0.2
+openpyxl>=3.1
+
+# SMS
+smsir-python>=1.0
+
+# Images
+Pillow>=12.3
+
+# HTTP
+requests>=2.34
+
+# Server (Windows)
+waitress>=3.0

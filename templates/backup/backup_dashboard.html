@@ -1,0 +1,256 @@
+{% extends "settings_app/base_settings.html" %}
+{% load jalali_filters %}
+
+{% block settings_content %}
+<style>
+    .bk-hero { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:20px; }
+    @media(max-width:992px){ .bk-hero { grid-template-columns:1fr; } }
+
+    .bk-section {
+        background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg);
+        overflow:hidden; transition:all .25s;
+    }
+    .bk-section:hover { border-color:var(--border-hover); box-shadow:var(--shadow-md); }
+    .bk-section .bk-hdr {
+        padding:16px 20px; border-bottom:1px solid var(--border);
+        display:flex; align-items:center; gap:10px;
+    }
+    .bk-section .bk-hdr h6 { font-size:0.95rem; font-weight:600; color:var(--text-primary); margin:0; }
+    .bk-section .bk-body { padding:16px 20px; }
+
+    .bk-stat-row {
+        display:flex; align-items:center; justify-content:space-between;
+        padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.04);
+    }
+    .bk-stat-row:last-child { border-bottom:none; }
+    .bk-stat-row .bk-name { font-size:0.8rem; color:var(--text-secondary); }
+    .bk-stat-row .bk-count { font-size:0.8rem; font-weight:600; color:var(--accent-light); }
+
+    .bk-check {
+        display:flex; align-items:center; gap:8px; padding:8px 12px;
+        background:var(--bg-table-row); border-radius:var(--radius-sm);
+        margin-bottom:6px; cursor:pointer; transition:all .15s;
+    }
+    .bk-check:hover { background:var(--bg-table-row-hover); }
+    .bk-check input[type="checkbox"] { width:16px; height:16px; accent-color:var(--accent); }
+    .bk-check .bk-check-label { font-size:0.82rem; color:var(--text-primary); flex:1; }
+    .bk-check .bk-check-count { font-size:0.72rem; color:var(--text-muted); }
+
+    .bk-table { font-size:0.8rem; }
+    .bk-table thead th {
+        background:var(--bg-table-header) !important; color:var(--text-secondary) !important;
+        font-weight:600; font-size:0.73rem; padding:10px 14px; border:none;
+    }
+    .bk-table tbody td { padding:10px 14px; border-color:rgba(255,255,255,0.04); vertical-align:middle; }
+
+    .bk-badge {
+        display:inline-flex; align-items:center; gap:4px; padding:3px 10px;
+        border-radius:20px; font-size:0.7rem; font-weight:600;
+    }
+
+    .bk-btn {
+        display:inline-flex; align-items:center; gap:6px; padding:10px 20px;
+        border:none; border-radius:var(--radius-md); font-size:0.85rem;
+        font-weight:600; cursor:pointer; transition:all .2s; width:100%;
+        justify-content:center; text-decoration:none;
+    }
+    .bk-btn-success { background:linear-gradient(135deg,#10b981,#059669); color:#fff; }
+    .bk-btn-success:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(16,185,129,0.3); }
+    .bk-btn-warning { background:linear-gradient(135deg,#f59e0b,#d97706); color:#fff; }
+    .bk-btn-warning:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(245,158,11,0.3); }
+    .bk-btn-danger { background:linear-gradient(135deg,#ef4444,#dc2626); color:#fff; }
+    .bk-btn-danger:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(239,68,68,0.3); }
+    .bk-btn-outline { background:transparent; border:1px solid var(--border); color:var(--text-secondary); }
+    .bk-btn-outline:hover { border-color:var(--accent); color:var(--accent); }
+</style>
+
+<div class="bk-hero">
+    <!-- Full Backup -->
+    <div class="bk-section animate-in">
+        <div class="bk-hdr" style="background:linear-gradient(135deg,rgba(16,185,129,0.08),rgba(16,185,129,0.03));">
+            <div style="width:36px;height:36px;border-radius:10px;background:rgba(16,185,129,0.12);display:flex;align-items:center;justify-content:center;color:#10b981;">
+                <i class="fas fa-download"></i>
+            </div>
+            <h6>بکاپ کامل</h6>
+        </div>
+        <div class="bk-body">
+            <p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:12px;">
+                تمام اطلاعات کسب‌وکار شما در یک فایل ZIP
+            </p>
+            {% for s in sections %}
+            <div class="bk-stat-row">
+                <span class="bk-name"><i class="{{ s.icon }} ms-1" style="font-size:0.7rem;"></i> {{ s.label }}</span>
+                <span class="bk-count">{{ s.total }} رکورد</span>
+            </div>
+            {% endfor %}
+            <a href="{% url 'backup_full_export' %}" class="bk-btn bk-btn-success mt-3">
+                <i class="fas fa-download"></i> دانلود بکاپ کامل
+            </a>
+        </div>
+    </div>
+
+    <!-- Partial Backup -->
+    <div class="bk-section animate-in">
+        <div class="bk-hdr" style="background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(245,158,11,0.03));">
+            <div style="width:36px;height:36px;border-radius:10px;background:rgba(245,158,11,0.12);display:flex;align-items:center;justify-content:center;color:#f59e0b;">
+                <i class="fas fa-check-double"></i>
+            </div>
+            <h6>بکاپ جزئی</h6>
+        </div>
+        <div class="bk-body">
+            <p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:12px;">
+                بخش‌های مورد نظر خود را انتخاب کنید
+            </p>
+            <form method="post" action="{% url 'backup_partial_export' %}">
+                {% csrf_token %}
+                {% for s in sections %}
+                <label class="bk-check">
+                    <input type="checkbox" name="sections" value="{{ s.key }}" checked>
+                    <span class="bk-check-label">{{ s.label }}</span>
+                    <span class="bk-check-count">{{ s.total }}</span>
+                </label>
+                {% endfor %}
+                <button type="submit" class="bk-btn bk-btn-warning mt-3">
+                    <i class="fas fa-download"></i> دانلود بکاپ جزئی
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Restore -->
+    <div class="bk-section animate-in">
+        <div class="bk-hdr" style="background:linear-gradient(135deg,rgba(239,68,68,0.08),rgba(239,68,68,0.03));">
+            <div style="width:36px;height:36px;border-radius:10px;background:rgba(239,68,68,0.12);display:flex;align-items:center;justify-content:center;color:#ef4444;">
+                <i class="fas fa-upload"></i>
+            </div>
+            <h6>بازیابی</h6>
+        </div>
+        <div class="bk-body">
+            <p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:12px;">
+                فایل بکاپ را آپلود و بازیابی کنید
+            </p>
+            <form method="post" action="{% url 'backup_restore' %}" enctype="multipart/form-data" id="restore-form">
+                {% csrf_token %}
+                <div style="margin-bottom:12px;">
+                    <label class="form-label" style="font-size:0.8rem;">فایل بکاپ (ZIP)</label>
+                    <input type="file" name="backup_file" class="form-control form-control-sm"
+                           accept=".zip" required style="color-scheme:dark;">
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label class="form-label" style="font-size:0.8rem;">حالت بازیابی</label>
+                    <select name="mode" class="form-select form-select-sm" style="color-scheme:dark;">
+                        <option value="update">بروزرسانی (افزودن/ویرایش)</option>
+                        <option value="replace">جایگزینی کامل</option>
+                    </select>
+                </div>
+                <div id="replace-warning" style="display:none;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);padding:10px;margin-bottom:12px;">
+                    <div style="color:#ef4444;font-size:0.78rem;font-weight:600;margin-bottom:4px;">
+                        <i class="fas fa-exclamation-triangle ms-1"></i> هشدار
+                    </div>
+                    <div style="color:var(--text-muted);font-size:0.72rem;">
+                        در این حالت تمام اطلاعات موجود بخش‌های انتخاب شده حذف و جایگزین می‌شوند.
+                    </div>
+                </div>
+                <button type="submit" class="bk-btn bk-btn-danger">
+                    <i class="fas fa-upload"></i> بازیابی
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- History -->
+<div class="bk-section animate-in">
+    <div class="bk-hdr">
+        <i class="fas fa-history" style="color:var(--accent);"></i>
+        <h6>تاریخچه عملیات</h6>
+        <span style="margin-right:auto;font-size:0.72rem;color:var(--text-muted);">{{ recent_backups|length }} مورد</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table bk-table mb-0">
+            <thead>
+                <tr>
+                    <th>تاریخ</th>
+                    <th>نوع</th>
+                    <th>وضعیت</th>
+                    <th>تعداد رکورد</th>
+                    <th>حجم</th>
+                    <th>کاربر</th>
+                    <th>عملیات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in recent_backups %}
+                <tr>
+                    <td style="font-size:0.78rem;color:var(--text-secondary);">{{ log.created_at|to_jalali_datetime }}</td>
+                    <td>
+                        {% if log.backup_type == 'full_backup' %}
+                        <span class="bk-badge" style="background:rgba(16,185,129,0.12);color:#10b981;">
+                            <i class="fas fa-download" style="font-size:0.6rem;"></i> کامل
+                        </span>
+                        {% elif log.backup_type == 'partial_backup' %}
+                        <span class="bk-badge" style="background:rgba(245,158,11,0.12);color:#f59e0b;">
+                            <i class="fas fa-check-double" style="font-size:0.6rem;"></i> جزئی
+                        </span>
+                        {% elif log.backup_type == 'restore_update' %}
+                        <span class="bk-badge" style="background:rgba(6,182,212,0.12);color:#06b6d4;">
+                            <i class="fas fa-upload" style="font-size:0.6rem;"></i> بروزرسانی
+                        </span>
+                        {% elif log.backup_type == 'restore_replace' %}
+                        <span class="bk-badge" style="background:rgba(239,68,68,0.12);color:#ef4444;">
+                            <i class="fas fa-exchange-alt" style="font-size:0.6rem;"></i> جایگزینی
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if log.status == 'success' %}
+                        <span class="bk-badge" style="background:rgba(16,185,129,0.12);color:#10b981;">موفق</span>
+                        {% elif log.status == 'failed' %}
+                        <span class="bk-badge" style="background:rgba(239,68,68,0.12);color:#ef4444;">ناموفق</span>
+                        {% else %}
+                        <span class="bk-badge" style="background:rgba(245,158,11,0.12);color:#f59e0b;">جزئی</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-weight:600;">{{ log.record_count }}</td>
+                    <td style="font-size:0.78rem;color:var(--text-secondary);">
+                        {% if log.file_size > 0 %}{{ log.file_size|filesizeformat }}{% else %}-{% endif %}
+                    </td>
+                    <td style="font-size:0.78rem;">{{ log.created_by.username|default:"-" }}</td>
+                    <td>
+                        <div style="display:flex;gap:4px;">
+                            {% if log.status == 'success' and log.backup_type != 'restore_update' and log.backup_type != 'restore_replace' %}
+                            <a href="{% url 'backup_download' log.pk %}" class="btn btn-sm btn-outline-primary" title="دانلود">
+                                <i class="fas fa-download"></i>
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'backup_metadata' log.pk %}" class="btn btn-sm btn-outline-info" title="اطلاعات">
+                                <i class="fas fa-info-circle"></i>
+                            </a>
+                            <form method="post" action="{% url 'backup_delete' log.pk %}" style="display:inline;" onsubmit="return confirm('آیا از حذف این بکاپ اطمینان دارید؟');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="حذف">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="empty-state" style="padding:30px;">
+                        <i class="fas fa-inbox d-block mb-2" style="font-size:1.5rem;"></i>
+                        هیچ عملیاتی ثبت نشده
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+document.querySelector('select[name="mode"]').addEventListener('change', function() {
+    document.getElementById('replace-warning').style.display = this.value === 'replace' ? 'block' : 'none';
+});
+</script>
+{% endblock %}

@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% load jalali_filters %}
+
+{% block page_icon %}warehouse{% endblock %}
+{% block page_title %}گزارش موجودی انبار{% endblock %}
+
+{% block extra_css %}
+<style>
+    .inv-hero { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+    @media(max-width:992px){ .inv-hero { grid-template-columns:repeat(2,1fr); } }
+    @media(max-width:576px){ .inv-hero { grid-template-columns:1fr; } }
+    .inv-stat {
+        background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-md);
+        padding:14px 16px; text-align:center; transition:all .2s;
+    }
+    .inv-stat:hover { transform:translateY(-2px); box-shadow:var(--shadow-md); }
+    .inv-stat .inv-val { font-size:1.1rem; font-weight:700; }
+    .inv-stat .inv-label { font-size:0.7rem; color:var(--text-muted); margin-top:2px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="animate-in" style="font-size:1.1rem;"><i class="fas fa-warehouse ms-2" style="color:var(--warning);"></i> گزارش موجودی انبار</h4>
+    <a href="{% url 'report_dashboard' %}" class="btn btn-sm btn-outline-secondary"><i class="fas fa-arrow-right ms-1"></i> بازگشت</a>
+</div>
+
+<!-- Stats -->
+<div class="inv-hero">
+    <div class="inv-stat animate-in" style="border-right:3px solid var(--success);">
+        <div class="inv-val" style="color:var(--success);">{{ sufficient_count }}</div>
+        <div class="inv-label">کافی</div>
+    </div>
+    <div class="inv-stat animate-in" style="border-right:3px solid var(--warning);">
+        <div class="inv-val" style="color:var(--warning);">{{ low_count }}</div>
+        <div class="inv-label">کمبود</div>
+    </div>
+    <div class="inv-stat animate-in" style="border-right:3px solid var(--danger);">
+        <div class="inv-val" style="color:var(--danger);">{{ out_count }}</div>
+        <div class="inv-label">ناموجود</div>
+    </div>
+    <div class="inv-stat animate-in" style="border-right:3px solid var(--accent);">
+        <div class="inv-val" style="color:var(--accent);">{{ total_materials }}</div>
+        <div class="inv-label">کل مواد</div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Materials -->
+    <div class="col-lg-6">
+        <div class="card animate-in">
+            <div class="card-header" style="background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(245,158,11,0.03));">
+                <i class="fas fa-cubes" style="color:var(--warning);"></i> مواد اولیه
+                <span class="badge me-auto" style="background:rgba(245,158,11,0.15);color:var(--warning);">{{ materials|length }} نوع</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>نام</th>
+                            <th>موجودی</th>
+                            <th>حداقل</th>
+                            <th>واحد</th>
+                            <th>وضعیت</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for m in materials %}
+                        <tr>
+                            <td style="font-weight:500;">{{ m.name }}<div style="font-size:0.7rem;color:var(--text-muted);">{{ m.code }}</div></td>
+                            <td class="{% if m.stock_status != 'sufficient' %}fw-bold{% endif %}" style="{% if m.stock_status == 'out_of_stock' %}color:#ef4444;{% elif m.stock_status == 'low' %}color:#f59e0b;{% endif %}">{{ m.current_stock }}</td>
+                            <td>{{ m.min_stock }}</td>
+                            <td>{{ m.get_unit_display }}</td>
+                            <td>
+                                {% if m.stock_status == 'out_of_stock' %}
+                                <span class="badge" style="background:rgba(239,68,68,0.15);color:#ef4444;">ناموجود</span>
+                                {% elif m.stock_status == 'low' %}
+                                <span class="badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;">کمبود</span>
+                                {% else %}
+                                <span class="badge" style="background:rgba(16,185,129,0.15);color:#10b981;">کافی</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="empty-state" style="padding:30px;"><i class="fas fa-inbox d-block mb-2"></i> ماده‌ای ثبت نشده</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Products -->
+    <div class="col-lg-6">
+        <div class="card animate-in">
+            <div class="card-header" style="background:linear-gradient(135deg,rgba(6,182,212,0.08),rgba(6,182,212,0.03));">
+                <i class="fas fa-box" style="color:var(--info);"></i> محصولات نهایی
+                <span class="badge me-auto" style="background:rgba(6,182,212,0.15);color:var(--info);">{{ products|length }} نوع</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>نام</th>
+                            <th>موجودی</th>
+                            <th>حداقل</th>
+                            <th>وضعیت</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in products %}
+                        <tr>
+                            <td style="font-weight:500;">{{ p.product.name }}<div style="font-size:0.7rem;color:var(--text-muted);">{{ p.product.code }}</div></td>
+                            <td class="{% if p.stock_status != 'sufficient' %}fw-bold{% endif %}" style="{% if p.stock_status == 'out_of_stock' %}color:#ef4444;{% elif p.stock_status == 'low' %}color:#f59e0b;{% endif %}">{{ p.current_stock }}</td>
+                            <td>{{ p.min_stock }}</td>
+                            <td>
+                                {% if p.stock_status == 'out_of_stock' %}
+                                <span class="badge" style="background:rgba(239,68,68,0.15);color:#ef4444;">ناموجود</span>
+                                {% elif p.stock_status == 'low' %}
+                                <span class="badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;">کمبود</span>
+                                {% else %}
+                                <span class="badge" style="background:rgba(16,185,129,0.15);color:#10b981;">کافی</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="empty-state" style="padding:30px;"><i class="fas fa-inbox d-block mb-2"></i> محصولی ثبت نشده</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

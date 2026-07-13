@@ -1,0 +1,692 @@
+{% load static %}
+{% load jalali_filters %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فاکتور فروش {{ invoice.invoice_number }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @page { size: A4; margin: 12mm 15mm; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background: #fff;
+            color: #333;
+            direction: rtl;
+            font-size: 11px;
+            line-height: 1.6;
+        }
+        .print-container {
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 10mm 12mm;
+        }
+
+        /* ─── Header ─── */
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding-bottom: 10px;
+            margin-bottom: 14px;
+            border-bottom: 2px solid #c0392b;
+        }
+
+        .company-info { flex: 1; }
+        .company-logo-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+        .logo-box {
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            background: #c0392b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+        .company-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #c0392b;
+        }
+        .company-subtitle {
+            font-size: 0.7rem;
+            color: #999;
+            margin-top: 1px;
+        }
+        .company-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 4px;
+        }
+        .company-details .detail-item {
+            font-size: 0.72rem;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .company-details .detail-item i {
+            color: #c0392b;
+            font-size: 0.6rem;
+        }
+
+        .invoice-title-box {
+            text-align: left;
+            flex-shrink: 0;
+        }
+        .invoice-badge {
+            display: inline-block;
+            background: #c0392b;
+            color: #fff;
+            padding: 5px 18px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+        .invoice-number-display {
+            font-size: 0.72rem;
+            color: #888;
+            margin-top: 4px;
+        }
+        .invoice-number-display span {
+            font-weight: 700;
+            color: #c0392b;
+            direction: ltr;
+            display: inline-block;
+        }
+
+        /* ─── Info Cards ─── */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        .info-card {
+            border: 1px solid #f0d0cc;
+            border-radius: 6px;
+            padding: 8px 10px;
+            background: #fef9f8;
+        }
+        .info-card-header {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 5px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #f0d0cc;
+        }
+        .info-card-header i {
+            font-size: 0.65rem;
+            color: #c0392b;
+        }
+        .info-card-header h6 {
+            font-size: 0.68rem;
+            font-weight: 600;
+            color: #c0392b;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5px 0;
+        }
+        .info-row .label {
+            font-size: 0.66rem;
+            color: #999;
+        }
+        .info-row .value {
+            font-size: 0.73rem;
+            color: #444;
+            font-weight: 600;
+        }
+
+        /* ─── Status Badge ─── */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 1px 8px;
+            border-radius: 12px;
+            font-size: 0.62rem;
+            font-weight: 600;
+        }
+        .status-paid { background: #d4edda; color: #155724; }
+        .status-partial { background: #fff3cd; color: #856404; }
+        .status-draft { background: #e2e3e5; color: #383d41; }
+        .status-sent { background: #d1ecf1; color: #0c5460; }
+
+        /* ─── Items Table ─── */
+        .table-wrapper {
+            border: 1px solid #f0d0cc;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 14px;
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .items-table thead th {
+            background: #c0392b;
+            color: #fff;
+            padding: 7px 8px;
+            font-size: 0.68rem;
+            font-weight: 600;
+            text-align: center;
+        }
+        .items-table thead th:first-child {
+            border-radius: 0 5px 0 0;
+        }
+        .items-table thead th:last-child {
+            border-radius: 5px 0 0 0;
+        }
+        .items-table tbody td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #f5e6e4;
+            font-size: 0.76rem;
+            text-align: center;
+            color: #444;
+        }
+        .items-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .items-table tbody tr:nth-child(even) {
+            background: #fef9f8;
+        }
+        .items-table .row-num {
+            width: 28px;
+            font-weight: 600;
+            color: #ccc;
+            font-size: 0.68rem;
+        }
+        .items-table .desc-cell {
+            text-align: right;
+            font-weight: 500;
+            color: #333;
+        }
+        .items-table .amount-cell {
+            font-weight: 700;
+            color: #c0392b;
+        }
+        .items-table .qty-cell {
+            font-weight: 600;
+        }
+
+        /* ─── Summary Section ─── */
+        .summary-section {
+            display: flex;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+        .notes-box {
+            flex: 1;
+            border: 1px solid #f0d0cc;
+            border-radius: 6px;
+            padding: 10px 12px;
+            background: #fef9f8;
+        }
+        .notes-box h6 {
+            font-size: 0.7rem;
+            color: #c0392b;
+            font-weight: 600;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .notes-box h6 i { color: #c0392b; }
+        .notes-box p {
+            font-size: 0.7rem;
+            color: #666;
+            line-height: 1.7;
+        }
+
+        .totals-box {
+            width: 280px;
+            border: 1px solid #f0d0cc;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .totals-header {
+            background: #c0392b;
+            padding: 6px 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .totals-header i { color: #fff; }
+        .totals-table {
+            width: 100%;
+        }
+        .totals-table tr td {
+            padding: 5px 12px;
+            font-size: 0.76rem;
+            color: #555;
+        }
+        .totals-table tr td:first-child {
+            color: #888;
+            font-size: 0.7rem;
+        }
+        .totals-table tr td:last-child {
+            font-weight: 600;
+            direction: ltr;
+            text-align: right;
+        }
+        .totals-table .discount-row td {
+            color: #155724;
+        }
+        .totals-table .tax-row td {
+            color: #c0392b;
+        }
+        .totals-table .total-row td {
+            background: #fef9f8;
+            border-top: 2px solid #c0392b;
+            font-size: 0.88rem;
+            color: #c0392b;
+            font-weight: 700;
+            padding: 8px 12px;
+        }
+        .totals-table .paid-row td {
+            color: #155724;
+        }
+        .totals-table .remaining-row td {
+            color: #c0392b;
+            font-weight: 700;
+        }
+
+        /* ─── Terms ─── */
+        .terms-box {
+            border: 1px solid #f0d0cc;
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin-bottom: 14px;
+            background: #fefdfb;
+        }
+        .terms-box h6 {
+            font-size: 0.68rem;
+            color: #c0392b;
+            font-weight: 600;
+            margin-bottom: 3px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .terms-box h6 i { color: #c0392b; }
+        .terms-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1px 14px;
+        }
+        .terms-list p {
+            font-size: 0.62rem;
+            color: #888;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .terms-list p::before {
+            content: '\f058';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            color: #c0392b;
+            font-size: 0.5rem;
+        }
+
+        /* ─── Footer ─── */
+        .footer-section {
+            border-top: 2px solid #c0392b;
+            padding-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        .footer-contact {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .footer-contact .contact-item {
+            font-size: 0.66rem;
+            color: #777;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .footer-contact .contact-item i {
+            color: #c0392b;
+            font-size: 0.55rem;
+            width: 12px;
+            text-align: center;
+        }
+        .signatures {
+            display: flex;
+            gap: 36px;
+        }
+        .signature-box {
+            text-align: center;
+        }
+        .signature-box .sig-line {
+            width: 100px;
+            height: 1px;
+            background: #e8c4c0;
+            margin-bottom: 4px;
+        }
+        .signature-box .sig-label {
+            font-size: 0.62rem;
+            color: #aaa;
+        }
+
+        @media print {
+            body { padding: 0; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact; }
+            .print-container { padding: 0; max-width: none; }
+            .no-print { display: none !important; }
+            .table-wrapper { break-inside: avoid; }
+            .items-table tr { break-inside: avoid; }
+        }
+
+        @media screen {
+            .print-container {
+                box-shadow: 0 0 30px rgba(0,0,0,0.06);
+                margin: 20px auto;
+                border-radius: 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print" style="text-align:center;padding:10px;background:#fef9f8;border-bottom:1px solid #f0d0cc;">
+        <button onclick="window.print()" style="background:#c0392b;color:#fff;border:none;padding:8px 28px;border-radius:6px;font-family:inherit;font-size:0.85rem;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+            <i class="fas fa-print"></i> چاپ فاکتور
+        </button>
+        <a href="{% url 'invoice_detail' pk=invoice.pk %}" style="background:#fff;color:#c0392b;border:1px solid #f0d0cc;padding:8px 20px;border-radius:6px;font-family:inherit;font-size:0.85rem;display:inline-flex;align-items:center;gap:6px;margin-right:6px;text-decoration:none;">
+            <i class="fas fa-arrow-right"></i> بازگشت
+        </a>
+    </div>
+
+    <div class="print-container">
+        <!-- Header -->
+        <div class="header-section">
+            <div class="company-info">
+                <div class="company-logo-row">
+                    <div class="logo-box">
+                        {% if company_logo_path %}
+                            <img src="/media/logos/{{ company_logo_path }}" alt="لوگو" style="width:32px;height:32px;object-fit:contain;">
+                        {% else %}
+                            <i class="fas fa-{{ company_info.logo|default:'industry' }}"></i>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <div class="company-name">{{ company_info.name|default:"شرکت" }}</div>
+                        <div class="company-subtitle">سیستم مدیریت تولید صنعتی</div>
+                    </div>
+                </div>
+                <div class="company-details">
+                    {% if company_info.phone %}
+                    <div class="detail-item">
+                        <i class="fas fa-phone"></i>
+                        <span>{{ company_info.phone }}</span>
+                    </div>
+                    {% endif %}
+                    {% if company_info.address %}
+                    <div class="detail-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>{{ company_info.address }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="invoice-title-box">
+                <div class="invoice-badge">
+                    <i class="fas fa-file-invoice ms-1"></i> فاکتور فروش
+                </div>
+                <div class="invoice-number-display">
+                    شماره: <span>{{ invoice.invoice_number }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Cards -->
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="info-card-header">
+                    <i class="fas fa-user"></i>
+                    <h6>خریدار</h6>
+                </div>
+                <div class="info-row">
+                    <span class="label">نام</span>
+                    <span class="value">{{ invoice.customer.name }}</span>
+                </div>
+                {% if invoice.customer.company %}
+                <div class="info-row">
+                    <span class="label">شرکت</span>
+                    <span class="value">{{ invoice.customer.company }}</span>
+                </div>
+                {% endif %}
+                {% if invoice.customer.phone %}
+                <div class="info-row">
+                    <span class="label">تلفن</span>
+                    <span class="value" style="direction:ltr;">{{ invoice.customer.phone }}</span>
+                </div>
+                {% endif %}
+                {% if invoice.customer.address %}
+                <div class="info-row">
+                    <span class="label">آدرس</span>
+                    <span class="value" style="font-size:0.66rem;">{{ invoice.customer.address|truncatewords:6 }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-header">
+                    <i class="fas fa-file-alt"></i>
+                    <h6>مشخصات فاکتور</h6>
+                </div>
+                <div class="info-row">
+                    <span class="label">شماره</span>
+                    <span class="value" style="direction:ltr;">{{ invoice.invoice_number }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">تاریخ صدور</span>
+                    <span class="value">{{ invoice.issue_date|to_jalali }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">نوع</span>
+                    <span class="value">{{ invoice.get_type_display }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">وضعیت</span>
+                    <span class="value">
+                        {% if invoice.status == 'paid' %}
+                            <span class="status-badge status-paid">پرداخت شده</span>
+                        {% elif invoice.status == 'partial' %}
+                            <span class="status-badge status-partial">پرداخت جزئی</span>
+                        {% elif invoice.status == 'sent' %}
+                            <span class="status-badge status-sent">ارسال شده</span>
+                        {% else %}
+                            <span class="status-badge status-draft">پیش‌نویس</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-header">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <h6>پرداخت</h6>
+                </div>
+                <div class="info-row">
+                    <span class="label">مبلغ کل</span>
+                    <span class="value">{{ invoice.total|currency_format }} ریال</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">پرداختی</span>
+                    <span class="value" style="color:#155724;">{{ invoice.paid_amount|currency_format }} ریال</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">باقیمانده</span>
+                    <span class="value" style="color:#c0392b;">{{ invoice.remaining_amount|currency_format }} ریال</span>
+                </div>
+                {% if invoice.payment_method %}
+                <div class="info-row">
+                    <span class="label">روش</span>
+                    <span class="value">{{ invoice.payment_method }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Items Table -->
+        <div class="table-wrapper">
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th style="width:30px;">ردیف</th>
+                        <th>شرح کالا / خدمات</th>
+                        <th style="width:50px;">تعداد</th>
+                        <th style="width:80px;">فی واحد (ریال)</th>
+                        <th style="width:48px;">تخفیف</th>
+                        <th style="width:48px;">مالیات</th>
+                        <th style="width:90px;">مبلغ کل (ریال)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td class="row-num">{{ forloop.counter }}</td>
+                        <td class="desc-cell">
+                            {% if item.product %}
+                                {{ item.product.name }}
+                                <span style="font-size:0.6rem;color:#ccc;margin-right:4px;">{{ item.product.code }}</span>
+                            {% else %}
+                                {{ item.description }}
+                            {% endif %}
+                        </td>
+                        <td class="qty-cell">{{ item.quantity }}</td>
+                        <td>{{ item.unit_price|currency_format }}</td>
+                        <td>{% if item.discount_percent > 0 %}{{ item.discount_percent }}%{% else %}-{% endif %}</td>
+                        <td>{% if item.tax_percent > 0 %}{{ item.tax_percent }}%{% else %}-{% endif %}</td>
+                        <td class="amount-cell">{{ item.total|currency_format }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% for i in "   " %}
+                    <tr style="opacity:0.2;">
+                        <td class="row-num">{{ items|length|add:forloop.counter }}</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Summary Section -->
+        <div class="summary-section">
+            <div class="notes-box">
+                <h6><i class="fas fa-sticky-note"></i> توضیحات</h6>
+                <p>{{ invoice.notes|default:"ندارد" }}</p>
+            </div>
+            <div class="totals-box">
+                <div class="totals-header">
+                    <i class="fas fa-calculator"></i> خلاصه مبالغ
+                </div>
+                <table class="totals-table">
+                    <tr>
+                        <td>جمع اقلام:</td>
+                        <td>{{ invoice.subtotal|currency_format }} ریال</td>
+                    </tr>
+                    {% if invoice.discount_amount > 0 %}
+                    <tr class="discount-row">
+                        <td>تخفیف:</td>
+                        <td>- {{ invoice.discount_amount|currency_format }} ریال</td>
+                    </tr>
+                    {% endif %}
+                    {% if invoice.tax_amount > 0 %}
+                    <tr class="tax-row">
+                        <td>مالیات:</td>
+                        <td>+ {{ invoice.tax_amount|currency_format }} ریال</td>
+                    </tr>
+                    {% endif %}
+                    <tr class="total-row">
+                        <td>مبلغ نهایی:</td>
+                        <td>{{ invoice.total|currency_format }} ریال</td>
+                    </tr>
+                    {% if invoice.paid_amount > 0 %}
+                    <tr class="paid-row">
+                        <td>پرداخت شده:</td>
+                        <td>{{ invoice.paid_amount|currency_format }} ریال</td>
+                    </tr>
+                    {% endif %}
+                    {% if invoice.remaining_amount > 0 %}
+                    <tr class="remaining-row">
+                        <td>باقیمانده:</td>
+                        <td>{{ invoice.remaining_amount|currency_format }} ریال</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+
+        <!-- Terms -->
+        <div class="terms-box">
+            <h6><i class="fas fa-info-circle"></i> شرایط</h6>
+            <div class="terms-list">
+                <p>پرداخت طبق شرایط مندرج در قرارداد</p>
+                <p>اعتبار فاکتور ۳۰ روز از تاریخ صدور</p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer-section">
+            <div class="footer-contact">
+                {% if company_info.phone %}
+                <div class="contact-item">
+                    <i class="fas fa-phone"></i>
+                    <span>{{ company_info.phone }}</span>
+                </div>
+                {% endif %}
+                {% if company_info.address %}
+                <div class="contact-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>{{ company_info.address }}</span>
+                </div>
+                {% endif %}
+                <div class="contact-item">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>تاریخ چاپ: {% now "Y/m/d H:i" %}</span>
+                </div>
+            </div>
+            <div class="signatures">
+                <div class="signature-box">
+                    <div class="sig-line"></div>
+                    <div class="sig-label">مهر و امضای فروشنده</div>
+                </div>
+                <div class="signature-box">
+                    <div class="sig-line"></div>
+                    <div class="sig-label">امضای خریدار</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

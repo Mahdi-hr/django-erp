@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% load jalali_filters %}
+
+{% block page_icon %}cogs{% endblock %}
+{% block page_title %}سفارش تولید{% endblock %}
+
+{% block content %}
+<div class="animate-in">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0">سفارش تولید #{{ order.pk }}</h4>
+        <div class="d-flex gap-2">
+            {% if order.status == 'pending' %}
+            <a href="{% url 'order_start' order.pk %}" class="btn btn-primary">
+                <i class="fas fa-play ms-2"></i> شروع تولید
+            </a>
+            <a href="{% url 'order_cancel' order.pk %}" class="btn btn-danger">
+                <i class="fas fa-times ms-2"></i> لغو
+            </a>
+            {% elif order.status == 'in_progress' %}
+            <a href="{% url 'order_complete' order.pk %}" class="btn btn-primary">
+                <i class="fas fa-check ms-2"></i> تکمیل تولید
+            </a>
+            <a href="{% url 'order_cancel' order.pk %}" class="btn btn-danger">
+                <i class="fas fa-times ms-2"></i> لغو
+            </a>
+            {% endif %}
+            <a href="{% url 'order_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-right ms-2"></i> بازگشت
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle ms-2"></i> اطلاعات سفارش</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-hover mb-0">
+                        <tr><td>محصول:</td><td>{{ order.product.name }}</td></tr>
+                        <tr><td>تعداد:</td><td>{{ order.quantity }}</td></tr>
+                        <tr><td>هزینه هر واحد:</td><td>{{ order.unit_cost|currency_format }}</td></tr>
+                        <tr><td>هزینه کل:</td><td>{{ order.total_cost|currency_format }}</td></tr>
+                        <tr><td>تاریخ برنامه‌ریزی:</td><td>{{ order.planned_date|to_jalali }}</td></tr>
+                        <tr><td>تاریخ شروع:</td><td>{{ order.start_date|to_jalali|default:"-" }}</td></tr>
+                        <tr><td>تاریخ پایان:</td><td>{{ order.end_date|to_jalali|default:"-" }}</td></tr>
+                        <tr><td>وضعیت:</td>
+                            <td>
+                                {% if order.status == 'pending' %}
+                                <span class="badge">در انتظار</span>
+                                {% elif order.status == 'in_progress' %}
+                                <span class="badge">در حال تولید</span>
+                                {% elif order.status == 'completed' %}
+                                <span class="badge">تکمیل</span>
+                                {% elif order.status == 'cancelled' %}
+                                <span class="badge">لغو شده</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-cubes ms-2"></i> مواد مصرفی</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>ماده</th>
+                                    <th>مقدار</th>
+                                    <th>هزینه</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pm in materials %}
+                                <tr>
+                                    <td>{{ pm.material.name }}</td>
+                                    <td>{{ pm.planned_quantity }}</td>
+                                    <td>{{ pm.total_cost|currency_format }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3">
+                                        <div class="empty-state">
+                                            <i class="fas fa-cubes fa-2x mb-2 text-muted"></i>
+                                            <p class="mb-0">ماده‌ای ثبت نشده</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

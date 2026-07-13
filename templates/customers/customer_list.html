@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load jalali_filters %}
+
+{% block title %}لیست مشتریان{% endblock %}
+{% block page_icon %}users{% endblock %}
+{% block page_title %}مشتریان{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 style="margin:0;"><i class="fas fa-users ms-2" style="color:var(--accent);"></i> مشتریان</h5>
+    <a href="{% url 'customer_create' %}" class="btn btn-primary">
+        <i class="fas fa-plus ms-1"></i> مشتری جدید
+    </a>
+</div>
+
+<!-- Search -->
+<div class="card mb-4 animate-in">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-10">
+                <input type="text" name="search" class="form-control" placeholder="جستجو بر اساس نام، شرکت، تلفن یا شهر..." value="{{ search }}">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">
+                    <i class="fas fa-search ms-1"></i> جستجو
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Customers Table -->
+<div class="card animate-in">
+    <div class="card-header">
+        <i class="fas fa-list"></i> لیست مشتریان
+        <span class="badge bg-primary me-auto">{{ customers|length }} نفر</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>نام</th>
+                    <th>شرکت</th>
+                    <th>تلفن</th>
+                    <th>شهر</th>
+                    <th>مانده حساب</th>
+                    <th>عملیات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in customers %}
+                <tr>
+                    <td style="font-weight:500;">{{ c.name }}</td>
+                    <td>{{ c.company|default:"-" }}</td>
+                    <td><code style="background:var(--bg-input);padding:2px 8px;border-radius:6px;">{{ c.phone|default:"-" }}</code></td>
+                    <td>{{ c.city|default:"-" }}</td>
+                    <td class="{% if c.is_debtor %}text-danger{% elif c.is_creditor %}text-success{% endif %}" style="font-weight:600;">
+                        {{ c.total_debt|currency_format }}
+                    </td>
+                    <td>
+                        <a href="{% url 'customer_detail' c.pk %}" class="btn btn-sm btn-outline-info">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{% url 'customer_edit' c.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{% url 'customer_delete' c.pk %}" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="empty-state" style="padding:40px;">
+                        <i class="fas fa-users d-block mb-2" style="font-size:2rem;"></i>
+                        مشتری‌ای یافت نشد
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

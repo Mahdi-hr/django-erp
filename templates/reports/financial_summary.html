@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% load jalali_filters %}
+
+{% block page_icon %}coins{% endblock %}
+{% block page_title %}خلاصه مالی{% endblock %}
+
+{% block extra_css %}
+<style>
+    .fin-hero { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px; }
+    @media(max-width:992px){ .fin-hero { grid-template-columns:repeat(2,1fr); } }
+    @media(max-width:576px){ .fin-hero { grid-template-columns:1fr; } }
+    .fin-stat {
+        background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg);
+        padding:18px 20px; position:relative; overflow:hidden; transition:all .25s;
+    }
+    .fin-stat:hover { transform:translateY(-2px); box-shadow:var(--shadow-lg); }
+    .fin-stat .fin-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1rem; margin-bottom:8px; }
+    .fin-stat .fin-val { font-size:1.15rem; font-weight:700; font-variant-numeric:tabular-nums; }
+    .fin-stat .fin-label { font-size:0.73rem; color:var(--text-muted); margin-top:2px; }
+    .fin-stat .fin-glow { position:absolute; top:-25px; right:-25px; width:80px; height:80px; border-radius:50%; opacity:0.06; pointer-events:none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="animate-in" style="font-size:1.1rem;"><i class="fas fa-coins ms-2" style="color:var(--accent);"></i> خلاصه مالی</h4>
+    <a href="{% url 'report_dashboard' %}" class="btn btn-sm btn-outline-secondary"><i class="fas fa-arrow-right ms-1"></i> بازگشت</a>
+</div>
+
+<!-- Filter -->
+<div class="card mb-3 animate-in">
+    <div class="card-body" style="padding:12px 16px;">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label" style="font-size:0.78rem;">ماه</label>
+                <select name="month" class="form-select form-select-sm" style="color-scheme:dark;">
+                    <option value="">همه ماه‌ها</option>
+                    {% for m in 12|make_list %}
+                    <option value="{{ forloop.counter }}" {% if month == forloop.counter|stringformat:"d" %}selected{% endif %}>{{ forloop.counter }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label" style="font-size:0.78rem;">سال</label>
+                <input type="number" name="year" class="form-control form-control-sm" value="{{ year }}">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-sm btn-primary w-100"><i class="fas fa-filter ms-1"></i> نمایش</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="fin-hero">
+    <div class="fin-stat animate-in">
+        <div class="fin-glow" style="background:var(--success);"></div>
+        <div class="fin-icon" style="background:rgba(16,185,129,0.12);color:var(--success);"><i class="fas fa-arrow-up"></i></div>
+        <div class="fin-val" style="color:var(--success);">{{ total_sales|currency_format }}</div>
+        <div class="fin-label">فروش</div>
+    </div>
+    <div class="fin-stat animate-in">
+        <div class="fin-glow" style="background:var(--danger);"></div>
+        <div class="fin-icon" style="background:rgba(239,68,68,0.12);color:var(--danger);"><i class="fas fa-arrow-down"></i></div>
+        <div class="fin-val" style="color:var(--danger);">{{ total_purchases|currency_format }}</div>
+        <div class="fin-label">خرید</div>
+    </div>
+    <div class="fin-stat animate-in">
+        <div class="fin-glow" style="background:var(--warning);"></div>
+        <div class="fin-icon" style="background:rgba(245,158,11,0.12);color:var(--warning);"><i class="fas fa-industry"></i></div>
+        <div class="fin-val" style="color:var(--warning);">{{ total_production|currency_format }}</div>
+        <div class="fin-label">هزینه تولید</div>
+    </div>
+    <div class="fin-stat animate-in">
+        <div class="fin-glow" style="background:var(--accent);"></div>
+        <div class="fin-icon" style="background:rgba(99,102,241,0.12);color:var(--accent);"><i class="fas fa-coins"></i></div>
+        <div class="fin-val" style="color:{% if profit >= 0 %}var(--success){% else %}var(--danger){% endif %};">{{ profit|currency_format }}</div>
+        <div class="fin-label">سود خالص</div>
+    </div>
+</div>
+
+<!-- Breakdown -->
+<div class="card animate-in">
+    <div class="card-header"><i class="fas fa-list-ul ms-2" style="color:var(--accent);"></i> جزئیات</div>
+    <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div style="padding:16px;background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.15);border-radius:var(--radius-md);">
+                <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:6px;"><i class="fas fa-arrow-up ms-1"></i> درآمد</div>
+                <div style="font-size:1.3rem;font-weight:700;color:var(--success);">{{ total_sales|currency_format }}</div>
+            </div>
+            <div style="padding:16px;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.15);border-radius:var(--radius-md);">
+                <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:6px;"><i class="fas fa-arrow-down ms-1"></i> هزینه‌ها</div>
+                <div style="font-size:1.3rem;font-weight:700;color:var(--danger);">{{ combined_costs|currency_format }}</div>
+            </div>
+        </div>
+        <div style="margin-top:16px;padding:16px;background:rgba(99,102,241,0.05);border:1px solid rgba(99,102,241,0.15);border-radius:var(--radius-md);text-align:center;">
+            <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:6px;">سود خالص</div>
+            <div style="font-size:1.5rem;font-weight:700;color:{% if profit >= 0 %}var(--success){% else %}var(--danger){% endif %};">{{ profit|currency_format }}</div>
+            {% if total_sales > 0 %}
+            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">حاشیه سود: {{ profit_margin }}%</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

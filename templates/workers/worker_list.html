@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% load static %}
+{% load jalali_filters %}
+
+{% block title %}لیست کارگران{% endblock %}
+{% block page_icon %}hard-hat{% endblock %}
+{% block page_title %}کارگران{% endblock %}
+
+{% block extra_css %}
+<style>
+    .filter-bar {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 14px 18px;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: flex-end;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .filter-bar .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .filter-bar label {
+        font-size: 0.7rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+    .filter-bar input, .filter-bar select {
+        background: var(--bg-input);
+        border: 1px solid var(--border);
+        color: var(--text-primary);
+        border-radius: var(--radius-sm);
+        padding: 6px 10px;
+        font-size: 0.8rem;
+        font-family: inherit;
+        width: 140px;
+    }
+    .filter-bar input:focus, .filter-bar select:focus {
+        border-color: var(--accent);
+        outline: none;
+    }
+    .worker-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 16px 20px;
+        margin-bottom: 10px;
+        transition: var(--transition);
+    }
+    .worker-card:hover {
+        border-color: var(--accent);
+        box-shadow: 0 4px 15px rgba(99,102,241,0.1);
+    }
+    .worker-main {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+    .worker-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex: 1;
+    }
+    .worker-avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: var(--grad-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: 700;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+    .worker-name {
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-decoration: none;
+        color: var(--text-primary);
+    }
+    .worker-name:hover { color: var(--accent-light); }
+    .worker-role { font-size: 0.72rem; color: var(--text-secondary); }
+    .worker-stats {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    .stat-badge {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    .stat-badge.blue { background: rgba(99,102,241,0.08); color: var(--accent-light); }
+    .stat-badge.green { background: rgba(16,185,129,0.08); color: var(--success); }
+    .stat-badge.orange { background: rgba(245,158,11,0.08); color: var(--warning); }
+    .stat-badge i { font-size: 0.6rem; }
+    .worker-actions { display: flex; gap: 6px; align-items: center; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 style="margin:0;"><i class="fas fa-hard-hat ms-2" style="color:var(--accent);"></i> کارگران</h5>
+    <a href="{% url 'worker_create' %}" class="btn btn-primary">
+        <i class="fas fa-plus ms-1"></i> کارگر جدید
+    </a>
+</div>
+
+<!-- Filter Bar -->
+<form method="get" class="filter-bar">
+    <div class="filter-group">
+        <label><i class="fas fa-search ms-1"></i> جستجو</label>
+        <input type="text" name="search" value="{{ search }}" placeholder="نام یا تلفن..." style="width:160px;">
+    </div>
+    <div class="filter-group">
+        <label><i class="fas fa-calendar ms-1"></i> از تاریخ</label>
+        <input type="text" name="date_from" value="{{ date_from }}" class="jalali-date" placeholder="تاریخ شروع" readonly>
+    </div>
+    <div class="filter-group">
+        <label><i class="fas fa-calendar ms-1"></i> تا تاریخ</label>
+        <input type="text" name="date_to" value="{{ date_to }}" class="jalali-date" placeholder="تاریخ پایان" readonly>
+    </div>
+    <div class="filter-group" style="flex-direction:row;gap:6px;align-self:flex-end;">
+        <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-filter ms-1"></i> فیلتر</button>
+        {% if date_from or date_to or search %}
+        <a href="{% url 'worker_list' %}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-times ms-1"></i> پاک کردن</a>
+        {% endif %}
+    </div>
+</form>
+
+{% for w in workers %}
+<div class="worker-card animate-in">
+    <div class="worker-main">
+        <div class="worker-info">
+            <div class="worker-avatar">{{ w.name|slice:":1" }}</div>
+            <div>
+                <a href="{% url 'worker_detail' w.pk %}" class="worker-name">{{ w.name }}</a>
+                <div class="worker-role">{{ w.get_role_display|default:"-" }} {% if w.phone %} · {{ w.phone }}{% endif %}</div>
+            </div>
+        </div>
+
+        <div class="worker-stats">
+            {% for key, val in worker_stats.items %}
+                {% if key == w.pk %}
+                    <div class="stat-badge green">
+                        <i class="fas fa-box"></i>
+                        {{ val.total_qty }} عدد تولید
+                    </div>
+                    <div class="stat-badge blue">
+                        <i class="fas fa-calendar-check"></i>
+                        {{ val.count }} روز کاری
+                    </div>
+                    {% if val.first_date and val.last_date %}
+                    <div class="stat-badge orange">
+                        <i class="fas fa-clock"></i>
+                        {{ val.first_date|to_jalali }} تا {{ val.last_date|to_jalali }}
+                    </div>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <div class="worker-actions">
+            <a href="{% url 'worker_detail' w.pk %}" class="btn btn-sm btn-outline-primary" title="مشاهده جزئیات">
+                <i class="fas fa-eye"></i>
+            </a>
+            <a href="{% url 'worker_edit' w.pk %}" class="btn btn-sm btn-outline-primary" title="ویرایش">
+                <i class="fas fa-edit"></i>
+            </a>
+            <a href="{% url 'worker_delete' w.pk %}" class="btn btn-sm btn-outline-danger" title="حذف">
+                <i class="fas fa-trash"></i>
+            </a>
+        </div>
+    </div>
+</div>
+{% empty %}
+<div class="card animate-in">
+    <div class="empty-state" style="padding:50px;">
+        <i class="fas fa-hard-hat d-block mb-2" style="font-size:2.5rem;"></i>
+        کارگری یافت نشد
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

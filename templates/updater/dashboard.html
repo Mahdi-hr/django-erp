@@ -1,0 +1,401 @@
+{% extends "settings_app/base_settings.html" %}
+{% load jalali_filters %}
+{% load static %}
+
+{% block settings_content %}
+<style>
+    /* ═══ Hero Stats ═══ */
+    .upd-hero { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px; }
+    @media(max-width:768px){ .upd-hero { grid-template-columns:1fr; } }
+    .upd-stat {
+        background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg);
+        padding:16px 18px; position:relative; overflow:hidden; transition:all .25s;
+    }
+    .upd-stat:hover { transform:translateY(-2px); box-shadow:var(--shadow-md); }
+    .upd-stat .upd-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1rem; margin-bottom:10px; }
+    .upd-stat .upd-val { font-size:1.2rem; font-weight:800; color:var(--text-primary); }
+    .upd-stat .upd-label { font-size:0.7rem; color:var(--text-muted); margin-top:2px; }
+    .upd-stat .upd-glow { position:absolute; top:-25px; right:-25px; width:80px; height:80px; border-radius:50%; opacity:0.06; pointer-events:none; }
+
+    /* ═══ Section Cards ═══ */
+    .upd-section {
+        background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg);
+        overflow:hidden; margin-bottom:14px;
+    }
+    .upd-section .upd-hdr {
+        padding:14px 18px; border-bottom:1px solid var(--border);
+        display:flex; align-items:center; gap:10px;
+    }
+    .upd-section .upd-hdr h6 { font-size:0.9rem; font-weight:600; color:var(--text-primary); margin:0; }
+    .upd-section .upd-body { padding:16px 18px; }
+
+    /* ═══ Update Alert ═══ */
+    .upd-alert {
+        background:linear-gradient(135deg, rgba(245,158,11,0.08), rgba(245,158,11,0.03));
+        border:1px solid rgba(245,158,11,0.2); border-radius:var(--radius-lg);
+        padding:16px 20px; margin-bottom:14px; display:flex; align-items:flex-start; gap:14px;
+    }
+    .upd-alert .alert-icon { width:42px; height:42px; border-radius:10px; background:rgba(245,158,11,0.12); display:flex; align-items:center; justify-content:center; color:#f59e0b; font-size:1.1rem; flex-shrink:0; }
+    .upd-alert .alert-body { flex:1; }
+    .upd-alert .alert-title { font-size:0.9rem; font-weight:700; color:#f59e0b; margin-bottom:4px; }
+    .upd-alert .alert-text { font-size:0.78rem; color:var(--text-muted); }
+
+    /* ═══ Commit List ═══ */
+    .commit-item {
+        display:flex; align-items:center; gap:10px; padding:8px 12px;
+        background:var(--bg-table-row); border-radius:var(--radius-sm); margin-bottom:6px;
+        font-size:0.78rem; color:var(--text-secondary);
+    }
+    .commit-item .commit-dot { width:6px; height:6px; border-radius:50%; background:var(--accent); flex-shrink:0; }
+    .commit-item code { font-size:0.72rem; color:var(--text-muted); }
+
+    /* ═══ Buttons ═══ */
+    .upd-btn {
+        display:inline-flex; align-items:center; gap:8px; padding:10px 22px;
+        border:none; border-radius:var(--radius-md); font-size:0.85rem;
+        font-weight:600; cursor:pointer; transition:all .2s; text-decoration:none;
+    }
+    .upd-btn-primary { background:linear-gradient(135deg,#6366f1,#4f46e5); color:#fff; }
+    .upd-btn-primary:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(99,102,241,0.3); }
+    .upd-btn-warning { background:linear-gradient(135deg,#f59e0b,#d97706); color:#fff; }
+    .upd-btn-warning:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(245,158,11,0.3); }
+    .upd-btn-danger { background:linear-gradient(135deg,#ef4444,#dc2626); color:#fff; }
+    .upd-btn-danger:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(239,68,68,0.3); }
+    .upd-btn-outline { background:transparent; border:1px solid var(--border); color:var(--text-secondary); }
+    .upd-btn-outline:hover { border-color:var(--accent); color:var(--accent); }
+
+    /* ═══ Log Table ═══ */
+    .upd-table { font-size:0.8rem; }
+    .upd-table thead th { background:var(--bg-table-header) !important; color:var(--text-secondary) !important; font-weight:600; font-size:0.73rem; padding:10px 14px; border:none; }
+    .upd-table tbody td { padding:10px 14px; border-color:rgba(255,255,255,0.04); vertical-align:middle; }
+
+    /* ═══ Badge ═══ */
+    .upd-badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:0.68rem; font-weight:600; }
+
+    /* ═══ Progress ═══ */
+    .upd-progress { display:none; margin-top:14px; }
+    .upd-progress .progress-bar { height:6px; border-radius:3px; background:linear-gradient(90deg,#6366f1,#a855f7); animation:progressPulse 2s infinite; }
+    @keyframes progressPulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+    .upd-progress .progress-text { font-size:0.78rem; color:var(--text-muted); margin-top:6px; display:flex; align-items:center; gap:6px; }
+
+    /* ═══ Version Info ═══ */
+    .ver-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .ver-item { padding:10px 14px; background:var(--bg-table-row); border-radius:var(--radius-sm); }
+    .ver-item .ver-label { font-size:0.68rem; color:var(--text-muted); margin-bottom:2px; }
+    .ver-item .ver-value { font-size:0.85rem; font-weight:600; color:var(--text-primary); font-family:monospace; }
+</style>
+
+<!-- Update Available Alert -->
+{% if update_check.available %}
+<div class="upd-alert animate-in">
+    <div class="alert-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+    <div class="alert-body">
+        <div class="alert-title">{{ update_check.commit_count }} آپدیت جدید موجود است!</div>
+        <div class="alert-text">تغییرات جدید از GitHub آماده دریافت هستند</div>
+    </div>
+    <button class="upd-btn upd-btn-warning" onclick="document.getElementById('updateModal').classList.add('show')">
+        <i class="fas fa-download"></i> دریافت آپدیت
+    </button>
+</div>
+{% endif %}
+
+<!-- Hero Stats -->
+<div class="upd-hero">
+    <div class="upd-stat animate-in">
+        <div class="upd-glow" style="background:var(--accent);"></div>
+        <div class="upd-icon" style="background:rgba(99,102,241,0.12);color:var(--accent);"><i class="fas fa-code-branch"></i></div>
+        <div class="upd-val">{{ version_info.version }}</div>
+        <div class="upd-label">ورژن فعلی سیستم</div>
+    </div>
+    <div class="upd-stat animate-in">
+        <div class="upd-glow" style="background:{% if update_check.available %}var(--warning){% else %}var(--success){% endif %};"></div>
+        <div class="upd-icon" style="background:rgba({% if update_check.available %}245,158,11{% else %}16,185,129{% endif %},0.12);color:{% if update_check.available %}var(--warning){% else %}var(--success){% endif %};">
+            <i class="fas fa-{% if update_check.available %}cloud-upload-alt{% else %}check-circle{% endif %}"></i>
+        </div>
+        <div class="upd-val">{% if update_check.available %}آپدیت موجود{% else %}به‌روز{% endif %}</div>
+        <div class="upd-label">{% if update_check.available %}{{ update_check.commit_count }} تغییر جدید{% else %}آخرین نسخه{% endif %}</div>
+    </div>
+    <div class="upd-stat animate-in">
+        <div class="upd-glow" style="background:var(--info);"></div>
+        <div class="upd-icon" style="background:rgba(6,182,212,0.12);color:var(--info);"><i class="fas fa-history"></i></div>
+        <div class="upd-val">{{ recent_logs|length }}</div>
+        <div class="upd-label">تعداد آپدیت‌های انجام شده</div>
+    </div>
+</div>
+
+<!-- Version Info -->
+<div class="upd-section animate-in">
+    <div class="upd-hdr">
+        <i class="fas fa-info-circle" style="color:var(--accent);"></i>
+        <h6>اطلاعات نسخه</h6>
+    </div>
+    <div class="upd-body">
+        <div class="ver-grid">
+            <div class="ver-item">
+                <div class="ver-label">ورژن فعلی</div>
+                <div class="ver-value">{{ version_info.version }}</div>
+            </div>
+            <div class="ver-item">
+                <div class="ver-label">آخرین به‌روزرسانی</div>
+                <div class="ver-value">{{ version_info.last_updated|default:"هرگز" }}</div>
+            </div>
+            <div class="ver-item">
+                <div class="ver-label">توضیحات</div>
+                <div class="ver-value" style="font-family:inherit;">{{ version_info.changelog|default:"ندارد" }}</div>
+            </div>
+            <div class="ver-item">
+                <div class="ver-label">وضعیت اتصال</div>
+                <div class="ver-value">
+                    {% if update_check.available %}
+                    <span style="color:var(--warning);"><i class="fas fa-wifi ms-1"></i> متصل — آپدیت موجود</span>
+                    {% elif update_check.message %}
+                    <span style="color:var(--success);"><i class="fas fa-check ms-1"></i> {{ update_check.message }}</span>
+                    {% else %}
+                    <span style="color:var(--text-muted);"><i class="fas fa-wifi ms-1"></i> {{ update_check.error|default:"نامشخص" }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Actions -->
+<div class="upd-section animate-in">
+    <div class="upd-hdr">
+        <i class="fas fa-cogs" style="color:var(--warning);"></i>
+        <h6>عملیات</h6>
+    </div>
+    <div class="upd-body">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="upd-btn upd-btn-primary" onclick="checkUpdates()" id="checkBtn">
+                <i class="fas fa-sync-alt"></i> بررسی آپدیت
+            </button>
+            <button class="upd-btn upd-btn-outline" onclick="document.getElementById('updateModal').classList.add('show')" {% if not update_check.available %}disabled{% endif %}>
+                <i class="fas fa-download"></i> اجرای آپدیت
+            </button>
+            <a href="{% url 'backup_dashboard' %}" class="upd-btn upd-btn-outline">
+                <i class="fas fa-database"></i> بک‌آپ
+            </a>
+        </div>
+        <div id="checkResult" style="margin-top:12px;"></div>
+
+        <!-- Progress Bar -->
+        <div class="upd-progress" id="updateProgress">
+            <div class="progress" style="height:6px;border-radius:3px;background:var(--bg-table-row);">
+                <div class="progress-bar" style="width:0%;transition:width 0.5s;"></div>
+            </div>
+            <div class="progress-text">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span id="progressText">در حال انجام...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Commits List -->
+{% if update_check.available and update_check.commits %}
+<div class="upd-section animate-in">
+    <div class="upd-hdr">
+        <i class="fas fa-list-ul" style="color:var(--success);"></i>
+        <h6>تغییرات جدید ({{ update_check.commit_count }} مورد)</h6>
+    </div>
+    <div class="upd-body" style="max-height:200px;overflow-y:auto;">
+        {% for commit in update_check.commits %}
+        <div class="commit-item">
+            <div class="commit-dot"></div>
+            <code>{{ commit|truncatechars:80 }}</code>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Update History -->
+<div class="upd-section animate-in">
+    <div class="upd-hdr">
+        <i class="fas fa-clock" style="color:var(--info);"></i>
+        <h6>تاریخچه آپدیت‌ها</h6>
+        {% if recent_logs %}<span style="margin-right:auto;font-size:0.72rem;color:var(--text-muted);">{{ recent_logs|length }} مورد</span>{% endif %}
+    </div>
+    <div class="table-responsive">
+        <table class="table upd-table mb-0">
+            <thead>
+                <tr>
+                    <th>تاریخ</th>
+                    <th>نسخه</th>
+                    <th>وضعیت</th>
+                    <th>کاربر</th>
+                    <th>عملیات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in recent_logs %}
+                <tr>
+                    <td style="font-size:0.78rem;color:var(--text-secondary);">{{ log.started_at|to_jalali_datetime }}</td>
+                    <td>
+                        <code style="font-size:0.75rem;">{{ log.version_from }}</code>
+                        <i class="fas fa-arrow-left ms-1" style="font-size:0.6rem;color:var(--text-muted);"></i>
+                        <code style="font-size:0.75rem;">{{ log.version_to }}</code>
+                    </td>
+                    <td>
+                        {% if log.status == 'success' %}
+                        <span class="upd-badge" style="background:rgba(16,185,129,0.12);color:#10b981;"><i class="fas fa-check" style="font-size:0.55rem;"></i> موفق</span>
+                        {% elif log.status == 'failed' %}
+                        <span class="upd-badge" style="background:rgba(239,68,68,0.12);color:#ef4444;"><i class="fas fa-times" style="font-size:0.55rem;"></i> ناموفق</span>
+                        {% elif log.status == 'rollback' %}
+                        <span class="upd-badge" style="background:rgba(245,158,11,0.12);color:#f59e0b;"><i class="fas fa-undo" style="font-size:0.55rem;"></i> بازگشت</span>
+                        {% else %}
+                        <span class="upd-badge" style="background:rgba(99,102,241,0.12);color:var(--accent);"><i class="fas fa-spinner" style="font-size:0.55rem;"></i> {{ log.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:0.78rem;">{{ log.triggered_by.username|default:"-" }}</td>
+                    <td>
+                        {% if log.status == 'success' and log.backup_path %}
+                        <button class="upd-btn upd-btn-danger" style="padding:4px 12px;font-size:0.72rem;" onclick="confirmRollback('{{ log.backup_path }}')">
+                            <i class="fas fa-undo"></i> بازگشت
+                        </button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="empty-state" style="padding:30px;">
+                        <i class="fas fa-inbox d-block mb-2" style="font-size:1.5rem;"></i>
+                        هیچ آپدیتی انجام نشده
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Update Modal -->
+<div id="updateModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:none;align-items:center;justify-content:center;">
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;max-width:440px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+            <div style="width:44px;height:44px;border-radius:10px;background:rgba(245,158,11,0.12);display:flex;align-items:center;justify-content:center;color:#f59e0b;font-size:1.2rem;">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div>
+                <div style="font-size:1rem;font-weight:700;color:var(--text-primary);">تأیید آپدیت</div>
+                <div style="font-size:0.75rem;color:var(--text-muted);">این عملیات غیرقابل بازگشت است</div>
+            </div>
+        </div>
+        <div style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.15);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px;">
+            <div style="font-size:0.8rem;color:var(--danger);font-weight:600;margin-bottom:6px;">هشدار:</div>
+            <ul style="font-size:0.75rem;color:var(--text-muted);margin:0;padding-right:16px;">
+                <li>بک‌آپ خودکار از دیتابیس گرفته می‌شود</li>
+                <li>فایل‌ها از GitHub دانلود می‌شوند</li>
+                <li>وابستگی‌ها آپدیت می‌شوند</li>
+                <li>مایگریشن‌ها اجرا می‌شوند</li>
+            </ul>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;">
+            <button class="upd-btn upd-btn-outline" onclick="document.getElementById('updateModal').classList.remove('show')">لغو</button>
+            <form method="post" action="{% url 'updater:perform_update' %}" style="display:inline;">
+                {% csrf_token %}
+                <input type="hidden" name="confirm" value="yes">
+                <button type="submit" class="upd-btn upd-btn-warning" onclick="startUpdate()">
+                    <i class="fas fa-sync-alt"></i> آپدیت کن
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Rollback Modal -->
+<div id="rollbackModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;max-width:400px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+            <div style="width:44px;height:44px;border-radius:10px;background:rgba(239,68,68,0.12);display:flex;align-items:center;justify-content:center;color:#ef4444;font-size:1.2rem;">
+                <i class="fas fa-undo"></i>
+            </div>
+            <div>
+                <div style="font-size:1rem;font-weight:700;color:var(--text-primary);">بازگشت به نسخه قبلی</div>
+                <div style="font-size:0.75rem;color:var(--text-muted);">تمام تغییرات اخیر بازگردانده می‌شود</div>
+            </div>
+        </div>
+        <input type="hidden" id="rollbackPath">
+        <div style="display:flex;gap:8px;justify-content:flex-end;">
+            <button class="upd-btn upd-btn-outline" onclick="document.getElementById('rollbackModal').classList.remove('show')">لغو</button>
+            <button class="upd-btn upd-btn-danger" onclick="doRollback()">
+                <i class="fas fa-undo"></i> بازگشت
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function showModal(id) { document.getElementById(id).style.display = 'flex'; }
+function hideModal(id) { document.getElementById(id).style.display = 'none'; }
+
+// Close modals on backdrop click
+document.querySelectorAll('[id$="Modal"]').forEach(modal => {
+    modal.addEventListener('click', function(e) {
+        if (e.target === this) this.style.display = 'none';
+    });
+});
+
+function checkUpdates() {
+    const btn = document.getElementById('checkBtn');
+    const result = document.getElementById('checkResult');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال بررسی...';
+    result.innerHTML = '';
+
+    fetch('{% url "updater:check_updates" %}', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-sync-alt"></i> بررسی آپدیت';
+        if (data.available) {
+            result.innerHTML = '<div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:var(--radius-sm);padding:10px;font-size:0.82rem;color:var(--success);"><i class="fas fa-check-circle ms-1"></i> ' + data.commit_count + ' آپدیت جدید موجود است</div>';
+        } else {
+            result.innerHTML = '<div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:var(--radius-sm);padding:10px;font-size:0.82rem;color:var(--accent);"><i class="fas fa-info-circle ms-1"></i> ' + (data.message || data.error || 'آپدیتی موجود نیست') + '</div>';
+        }
+    })
+    .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-sync-alt"></i> بررسی آپدیت';
+        result.innerHTML = '<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);padding:10px;font-size:0.82rem;color:var(--danger);"><i class="fas fa-exclamation-circle ms-1"></i> خطا: ' + err + '</div>';
+    });
+}
+
+function startUpdate() {
+    hideModal('updateModal');
+    const progress = document.getElementById('updateProgress');
+    progress.style.display = 'block';
+    const bar = progress.querySelector('.progress-bar');
+    const text = document.getElementById('progressText');
+    bar.style.width = '30%';
+    text.textContent = 'در حال دانلود آپدیت...';
+    setTimeout(() => { bar.style.width = '60%'; text.textContent = 'در حال نصب وابستگی‌ها...'; }, 3000);
+    setTimeout(() => { bar.style.width = '90%'; text.textContent = 'در حال اجرای مایگریشن‌ها...'; }, 6000);
+}
+
+function confirmRollback(path) {
+    document.getElementById('rollbackPath').value = path;
+    showModal('rollbackModal');
+}
+
+function doRollback() {
+    const path = document.getElementById('rollbackPath').value;
+    hideModal('rollbackModal');
+    fetch('{% url "updater:rollback" %}', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'backup_path=' + encodeURIComponent(path)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) { location.reload(); }
+        else { alert('خطا: ' + data.error); }
+    })
+    .catch(err => { alert('خطا: ' + err); });
+}
+</script>
+{% endblock %}

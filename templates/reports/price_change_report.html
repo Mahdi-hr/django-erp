@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load jalali_filters %}
+
+{% block page_icon %}chart-bar{% endblock %}
+{% block page_title %}تغییرات قیمت مواد اولیه{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="animate-in"><i class="fas fa-chart-bar ms-2"></i> تغییرات قیمت مواد اولیه</h4>
+</div>
+
+<div class="card animate-in">
+    <div class="card-header">
+        <i class="fas fa-history"></i> سوابق تغییرات قیمت
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>ماده</th>
+                    <th>قیمت قبلی</th>
+                    <th>قیمت جدید</th>
+                    <th>تغییر</th>
+                    <th>تاریخ</th>
+                    <th>تغییردهنده</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for h in history %}
+                <tr>
+                    <td style="font-weight:500;">{{ h.material.name }}</td>
+                    <td>{{ h.old_price|currency_format }}</td>
+                    <td>{{ h.new_price|currency_format }}</td>
+                    <td>
+                        {% with diff=h.new_price|add:h.old_price|add:"-0" %}
+                        {% if h.new_price > h.old_price %}
+                        <span style="color:var(--accent-danger);font-weight:600;">
+                            <i class="fas fa-arrow-up ms-1" style="font-size:0.65rem;"></i> +{{ h.new_price|sub:h.old_price|currency_format }}
+                        </span>
+                        {% elif h.new_price < h.old_price %}
+                        <span style="color:var(--accent-success);font-weight:600;">
+                            <i class="fas fa-arrow-down ms-1" style="font-size:0.65rem;"></i> {{ h.new_price|sub:h.old_price|currency_format }}
+                        </span>
+                        {% else %}
+                        <span class="text-muted">بدون تغییر</span>
+                        {% endif %}
+                        {% endwith %}
+                    </td>
+                    <td>{{ h.change_date|to_jalali }}</td>
+                    <td>{{ h.changed_by }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="empty-state" style="padding:40px;">
+                        <i class="fas fa-inbox d-block mb-2"></i> داده‌ای یافت نشد
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

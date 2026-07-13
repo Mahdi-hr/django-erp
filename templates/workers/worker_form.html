@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+{% block page_icon %}hard-hat{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="animate-in">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card cln-card">
+                <div class="card-header">
+                    <h5><i class="fas fa-hard-hat ms-2"></i> {{ title }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <!-- Section: اطلاعات پایه -->
+                        <div style="margin-bottom:14px;">
+                            <h6 style="font-size:0.8rem;color:var(--accent);margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+                                <i class="fas fa-user"></i> اطلاعات پایه
+                            </h6>
+                            <div class="cln-grid">
+                                <div>
+                                    <label class="form-label">{{ form.name.label }}</label>
+                                    {{ form.name }}
+                                    {% if form.name.errors %}<div class="text-danger small">{{ form.name.errors }}</div>{% endif %}
+                                </div>
+                                <div>
+                                    <label class="form-label">{{ form.phone.label }}</label>
+                                    {{ form.phone }}
+                                </div>
+                                <div>
+                                    <label class="form-label">{{ form.role.label }}</label>
+                                    {{ form.role }}
+                                </div>
+                                <div class="d-flex align-items-end pb-1">
+                                    <div class="form-check">
+                                        {{ form.is_active }}
+                                        <label class="form-check-label" for="{{ form.is_active.id_for_label }}">{{ form.is_active.label }}</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section: اطلاعات شخصی -->
+                        <div style="margin-bottom:14px;">
+                            <h6 style="font-size:0.8rem;color:var(--accent);margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+                                <i class="fas fa-id-card"></i> اطلاعات شخصی
+                            </h6>
+                            <div class="cln-grid">
+                                <div>
+                                    <label class="form-label">{{ form.national_id.label }}</label>
+                                    {{ form.national_id }}
+                                </div>
+                                <div>
+                                    <label class="form-label">{{ form.birth_date.label }}</label>
+                                    {{ form.birth_date }}
+                                </div>
+                                <div>
+                                    <label class="form-label">{{ form.emergency_phone.label }}</label>
+                                    {{ form.emergency_phone }}
+                                </div>
+                                <div class="full-width">
+                                    <label class="form-label">{{ form.address.label }}</label>
+                                    {{ form.address }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section: اطلاعات شغلی -->
+                        <div style="margin-bottom:14px;">
+                            <h6 style="font-size:0.8rem;color:var(--accent);margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+                                <i class="fas fa-briefcase"></i> اطلاعات شغلی
+                            </h6>
+                            <div class="cln-grid">
+                                <div>
+                                    <label class="form-label">{{ form.hire_date.label }}</label>
+                                    {{ form.hire_date }}
+                                </div>
+                                <div>
+                                    <label class="form-label">{{ form.skill.label }}</label>
+                                    {{ form.skill }}
+                                </div>
+                                <div>
+                                    <label class="form-label">{{ form.experience_years.label }}</label>
+                                    {{ form.experience_years }}
+                                </div>
+                                <div>
+                                    <label class="form-label">{{ form.salary.label }}</label>
+                                    {{ form.salary }}
+                                </div>
+                                <div>
+                                    <label class="form-label">{{ form.insurance_number.label }}</label>
+                                    {{ form.insurance_number }}
+                                </div>
+                                <div class="full-width">
+                                    <label class="form-label">{{ form.description.label }}</label>
+                                    {{ form.description }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="cln-actions">
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-save ms-1"></i> ذخیره</button>
+                            <a href="{% url 'worker_list' %}" class="btn btn-outline-secondary"><i class="fas fa-arrow-right ms-1"></i> بازگشت</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

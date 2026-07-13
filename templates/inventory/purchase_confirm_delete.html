@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}حذف{% endblock %}
+{% block page_icon %}warehouse{% endblock %}
+{% block page_title %}تایید حذف{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card animate-in">
+            <div class="card-header" style="background:rgba(239,68,68,0.08);">
+                <i class="fas fa-exclamation-triangle" style="color:var(--danger);"></i> تایید حذف
+            </div>
+            <div class="card-body text-center" style="padding:30px;">
+                <div style="width:60px;height:60px;border-radius:50%;background:rgba(239,68,68,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:1.5rem;color:var(--danger);">
+                    <i class="fas fa-trash"></i>
+                </div>
+                <h6 style="color:var(--text-primary);margin-bottom:8px;">آیا از حذف این مورد اطمینان دارید؟</h6>
+                <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:20px;">{{ object }}<br>موجودی انبار بازگردانده می‌شود.</p>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex gap-2 justify-content-center">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash ms-1"></i> حذف
+                        </button>
+                        <a href="javascript:history.back()" class="btn btn-outline-secondary">
+                            <i class="fas fa-times ms-1"></i> انصراف
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}تاریخچه آپدیت‌ها{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <div>
+                <h2><i class="fas fa-history me-2"></i>تاریخچه آپدیت‌ها</h2>
+                <p class="text-muted">مشاهده تمام آپدیت‌های انجام شده</p>
+            </div>
+            <a href="{% url 'updater:dashboard' %}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-right me-2"></i>بازگشت
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            {% if logs %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>تاریخ شروع</th>
+                            <th>تاریخ پایان</th>
+                            <th>ورژن قبلی</th>
+                            <th>ورژن جدید</th>
+                            <th>وضعیت</th>
+                            <th>توسط</th>
+                            <th>پیام خطا</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ log.started_at|date:"Y/m/d H:i:s" }}</td>
+                            <td>{{ log.completed_at|date:"Y/m/d H:i:s"|default:"-" }}</td>
+                            <td><code>{{ log.version_from }}</code></td>
+                            <td><code>{{ log.version_to }}</code></td>
+                            <td>
+                                {% if log.status == 'success' %}
+                                    <span class="badge bg-success">موفق</span>
+                                {% elif log.status == 'failed' %}
+                                    <span class="badge bg-danger">ناموفق</span>
+                                {% elif log.status == 'rollback' %}
+                                    <span class="badge bg-warning">بازگشت</span>
+                                {% elif log.status == 'pending' %}
+                                    <span class="badge bg-secondary">در انتظار</span>
+                                {% elif log.status == 'downloading' %}
+                                    <span class="badge bg-info">دانلود</span>
+                                {% elif log.status == 'updating' %}
+                                    <span class="badge bg-primary">آپدیت</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ log.triggered_by.username|default:"-" }}</td>
+                            <td>
+                                {% if log.error_message %}
+                                <span class="text-danger" title="{{ log.error_message }}">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </span>
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if log.status == 'success' and log.backup_path %}
+                                <button class="btn btn-sm btn-outline-danger" onclick="rollback('{{ log.backup_path }}')">
+                                    <i class="fas fa-undo me-1"></i>بازگشت
+                                </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-history fa-4x text-muted mb-3"></i>
+                <h5 class="text-muted">هنوز آپدیتی انجام نشده</h5>
+                <p class="text-muted">وقتی اولین آپدیت را انجام دهید، تاریخچه آن اینجا نمایش داده می‌شود</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- مودال بازگشت -->
+<div class="modal fade" id="rollbackModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-undo me-2"></i>تأیید بازگشت</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <h6>آیا از بازگشت اطمینان دارید؟</h6>
+                    <p class="mb-0">این عملیات تمام تغییرات اخیر را بازگشت می‌دهد!</p>
+                </div>
+                <input type="hidden" id="rollbackPath">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">لغو</button>
+                <button type="button" class="btn btn-danger" onclick="confirmRollback()">
+                    <i class="fas fa-undo me-2"></i>بازگشت
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function rollback(path) {
+    document.getElementById('rollbackPath').value = path;
+    const modal = new bootstrap.Modal(document.getElementById('rollbackModal'));
+    modal.show();
+}
+
+function confirmRollback() {
+    const path = document.getElementById('rollbackPath').value;
+    fetch('{% url "updater:rollback" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `backup_path=${encodeURIComponent(path)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('بازگشت با موفقیت انجام شد!');
+            location.reload();
+        } else {
+            alert('خطا: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('خطا: ' + error);
+    });
+}
+</script>
+{% endblock %}

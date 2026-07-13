@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load jalali_filters %}
+
+{% block title %}مدیریت پیامک{% endblock %}
+{% block page_icon %}sms{% endblock %}
+{% block page_title %}مدیریت پیامک{% endblock %}
+
+{% block content %}
+<!-- Compact SMS Nav -->
+<div class="d-flex flex-wrap gap-2 mb-4 animate-in">
+    <a href="{% url 'send_sms' %}" class="btn" style="background:linear-gradient(135deg,#6366f1,#818cf8);color:#fff;border-radius:var(--radius-full);padding:8px 18px;font-size:0.82rem;font-weight:500;display:inline-flex;align-items:center;gap:6px;">
+        <i class="fas fa-paper-plane" style="font-size:0.75rem;"></i> ارسال پیامک
+    </a>
+    <a href="{% url 'send_bulk_sms' %}" class="btn" style="background:linear-gradient(135deg,#10b981,#34d399);color:#fff;border-radius:var(--radius-full);padding:8px 18px;font-size:0.82rem;font-weight:500;display:inline-flex;align-items:center;gap:6px;">
+        <i class="fas fa-users" style="font-size:0.75rem;"></i> ارسال گروهی
+    </a>
+    <a href="{% url 'template_list' %}" class="btn" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#0f172a;border-radius:var(--radius-full);padding:8px 18px;font-size:0.82rem;font-weight:500;display:inline-flex;align-items:center;gap:6px;">
+        <i class="fas fa-file-alt" style="font-size:0.75rem;"></i> قالب‌ها
+    </a>
+    <a href="{% url 'message_list' %}" class="btn" style="background:linear-gradient(135deg,#06b6d4,#22d3ee);color:#fff;border-radius:var(--radius-full);padding:8px 18px;font-size:0.82rem;font-weight:500;display:inline-flex;align-items:center;gap:6px;">
+        <i class="fas fa-history" style="font-size:0.75rem;"></i> تاریخچه
+    </a>
+    <a href="{% url 'provider_config' %}" class="btn" style="background:linear-gradient(135deg,#ef4444,#f87171);color:#fff;border-radius:var(--radius-full);padding:8px 18px;font-size:0.82rem;font-weight:500;display:inline-flex;align-items:center;gap:6px;">
+        <i class="fas fa-cog" style="font-size:0.75rem;"></i> تنظیمات
+    </a>
+</div>
+
+<!-- Recent Messages -->
+<div class="card animate-in">
+    <div class="card-header">
+        <i class="fas fa-inbox"></i> آخرین پیامک‌ها
+        <span class="badge bg-info me-auto">{{ messages_list|length }} پیامک</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>شماره</th>
+                    <th>مشتری</th>
+                    <th>متن</th>
+                    <th>وضعیت</th>
+                    <th>تاریخ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for msg in messages_list %}
+                <tr>
+                    <td><code style="background:var(--bg-input);padding:2px 8px;border-radius:6px;">{{ msg.phone }}</code></td>
+                    <td style="font-weight:500;">{{ msg.customer.name|default:"-" }}</td>
+                    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ msg.message|truncatewords:8 }}</td>
+                    <td>
+                        {% if msg.status == 'sent' %}
+                        <span class="badge bg-success"><i class="fas fa-check ms-1" style="font-size:0.6rem;"></i> ارسال شده</span>
+                        {% elif msg.status == 'failed' %}
+                        <span class="badge bg-danger"><i class="fas fa-times ms-1" style="font-size:0.6rem;"></i> ناموفق</span>
+                        {% else %}
+                        <span class="badge bg-warning"><i class="fas fa-hourglass-half ms-1" style="font-size:0.6rem;"></i> در انتظار</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:0.82rem;color:var(--text-secondary);">{{ msg.sent_at|to_jalali }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="empty-state" style="padding:40px;">
+                        <i class="fas fa-sms d-block mb-2" style="font-size:2rem;"></i>
+                        پیامکی ارسال نشده
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

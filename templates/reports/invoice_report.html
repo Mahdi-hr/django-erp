@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load jalali_filters %}
+{% block page_icon %}file-invoice{% endblock %}
+{% block page_title %}گزارش فاکتورها{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="animate-in"><i class="fas fa-file-invoice ms-2"></i> گزارش فاکتورها</h4>
+</div>
+<div class="card mb-4 animate-in">
+    <div class="card-header"><i class="fas fa-filter"></i> فیلتر</div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">وضعیت</label>
+                <select name="status" class="form-select">
+                    <option value="">همه وضعیت‌ها</option>
+                    <option value="draft" {% if status == 'draft' %}selected{% endif %}>پیش‌نویس</option>
+                    <option value="sent" {% if status == 'sent' %}selected{% endif %}>ارسال شده</option>
+                    <option value="paid" {% if status == 'paid' %}selected{% endif %}>پرداخت شده</option>
+                    <option value="partial" {% if status == 'partial' %}selected{% endif %}>پرداخت جزئی</option>
+                    <option value="cancelled" {% if status == 'cancelled' %}selected{% endif %}>لغو شده</option>
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-outline-primary w-100"><i class="fas fa-filter ms-2"></i> اعمال فیلتر</button>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="row g-3 mb-4">
+    <div class="col-md-4"><div class="stat-card warning animate-in"><div class="stat-icon"><i class="fas fa-coins"></i></div><div class="stat-value" style="font-size:1rem;">{{ total_amount|currency_format }}</div><div class="stat-label">مبلغ کل فاکتورها</div></div></div>
+    <div class="col-md-4"><div class="stat-card success animate-in"><div class="stat-icon"><i class="fas fa-check-circle"></i></div><div class="stat-value" style="font-size:1rem;">{{ total_paid|currency_format }}</div><div class="stat-label">مبلغ دریافتی</div></div></div>
+    <div class="col-md-4"><div class="stat-card danger animate-in"><div class="stat-icon"><i class="fas fa-clock"></i></div><div class="stat-value" style="font-size:1rem;">{{ total_remaining|currency_format }}</div><div class="stat-label">مبلغ باقیمانده</div></div></div>
+</div>
+<div class="card animate-in">
+    <div class="card-header"><i class="fas fa-list"></i> لیست فاکتورها <span class="badge bg-info me-auto">{{ invoices|length }} فاکتور</span></div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>ردیف</th><th>شماره فاکتور</th><th>مشتری</th><th>نوع</th><th>وضعیت</th><th>مبلغ کل</th><th>پرداختی</th><th>باقیمانده</th><th>تاریخ</th></tr></thead>
+            <tbody>
+                {% for inv in invoices %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td style="font-weight:500;">{{ inv.invoice_number }}</td>
+                    <td>{{ inv.customer.name }}</td>
+                    <td>{{ inv.get_type_display }}</td>
+                    <td>
+                        {% if inv.status == 'paid' %}<span class="badge bg-success">پرداخت شده</span>
+                        {% elif inv.status == 'partial' %}<span class="badge bg-warning text-dark">پرداخت جزئی</span>
+                        {% elif inv.status == 'draft' %}<span class="badge bg-secondary">پیش‌نویس</span>
+                        {% elif inv.status == 'sent' %}<span class="badge bg-info">ارسال شده</span>
+                        {% elif inv.status == 'cancelled' %}<span class="badge bg-danger">لغو شده</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-weight:600;">{{ inv.total|currency_format }}</td>
+                    <td style="color:var(--success);">{{ inv.paid_amount|currency_format }}</td>
+                    <td style="color:var(--danger);">{{ inv.remaining_amount|currency_format }}</td>
+                    <td style="font-size:0.82rem;">{{ inv.issue_date|to_jalali }}</td>
+                </tr>
+                {% empty %}<tr><td colspan="9" class="empty-state" style="padding:40px;"><i class="fas fa-inbox d-block mb-2"></i> فاکتوری ثبت نشده</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

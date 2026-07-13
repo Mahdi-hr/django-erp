@@ -1,0 +1,362 @@
+{% extends "base.html" %}
+{% load jalali_filters %}
+
+{% block title %}جزئیات کارگر {{ worker.name }}{% endblock %}
+{% block page_icon %}hard-hat{% endblock %}
+{% block page_title %}جزئیات کارگر {{ worker.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .worker-profile {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 20px;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+    }
+    .profile-avatar {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: var(--grad-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: 700;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+        box-shadow: 0 4px 15px rgba(99,102,241,0.3);
+    }
+    .profile-info { flex: 1; }
+    .profile-name { font-size: 1.2rem; font-weight: 700; }
+    .profile-meta {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-top: 6px;
+    }
+    .profile-meta .meta-item {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .profile-meta .meta-item i { color: var(--accent); font-size: 0.65rem; }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+    .mini-stat {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 14px;
+        text-align: center;
+    }
+    .mini-stat .stat-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 8px;
+        font-size: 0.9rem;
+        color: #fff;
+    }
+    .mini-stat .stat-value { font-size: 1.3rem; font-weight: 800; line-height: 1.1; }
+    .mini-stat .stat-label { font-size: 0.68rem; color: var(--text-secondary); margin-top: 2px; }
+
+    .detail-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        margin-bottom: 16px;
+        overflow: hidden;
+    }
+    .detail-card-header {
+        padding: 12px 18px;
+        border-bottom: 1px solid var(--border);
+        font-weight: 600;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .detail-card-header i { color: var(--accent); }
+    .detail-card-body { padding: 14px 18px; }
+
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 10px;
+    }
+    .product-item {
+        background: rgba(99,102,241,0.04);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .product-item .prod-name { font-size: 0.8rem; font-weight: 600; }
+    .product-item .prod-code { font-size: 0.65rem; color: var(--text-secondary); }
+    .product-item .prod-qty {
+        background: var(--accent);
+        color: #fff;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .personal-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 8px;
+    }
+    .personal-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        background: rgba(99,102,241,0.03);
+        border-radius: var(--radius-sm);
+    }
+    .personal-item i { color: var(--accent); font-size: 0.7rem; width: 16px; text-align: center; }
+    .personal-item .p-label { font-size: 0.68rem; color: var(--text-secondary); }
+    .personal-item .p-value { font-size: 0.78rem; font-weight: 600; }
+
+    .filter-bar {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 12px 16px;
+        margin-bottom: 14px;
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+    }
+    .filter-bar .fg {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+    .filter-bar label {
+        font-size: 0.68rem;
+        color: var(--text-secondary);
+    }
+    .filter-bar input {
+        background: var(--bg-input);
+        border: 1px solid var(--border);
+        color: var(--text-primary);
+        border-radius: var(--radius-sm);
+        padding: 5px 10px;
+        font-size: 0.78rem;
+        font-family: inherit;
+    }
+    .filter-bar input:focus { border-color: var(--accent); outline: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="animate-in">
+    <!-- Profile Header -->
+    <div class="worker-profile">
+        <div class="profile-avatar">{{ worker.name|slice:":1" }}</div>
+        <div class="profile-info">
+            <div class="profile-name">{{ worker.name }}</div>
+            <div class="profile-meta">
+                <div class="meta-item"><i class="fas fa-hard-hat"></i> {{ worker.get_role_display|default:"-" }}</div>
+                {% if worker.phone %}<div class="meta-item"><i class="fas fa-phone"></i> {{ worker.phone }}</div>{% endif %}
+                {% if worker.skill %}<div class="meta-item"><i class="fas fa-star"></i> {{ worker.skill }}</div>{% endif %}
+                {% if not worker.is_active %}<div class="meta-item"><span class="badge bg-danger">غیرفعال</span></div>{% endif %}
+            </div>
+        </div>
+        <div style="display:flex;gap:6px;">
+            <a href="{% url 'worker_edit' worker.pk %}" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit ms-1"></i> ویرایش</a>
+            <a href="{% url 'worker_list' %}" class="btn btn-sm btn-outline-secondary"><i class="fas fa-arrow-right ms-1"></i> بازگشت</a>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="info-grid">
+        <div class="mini-stat">
+            <div class="stat-icon" style="background:var(--grad-primary);"><i class="fas fa-box"></i></div>
+            <div class="stat-value" style="color:var(--accent-light);">{{ total_qty }}</div>
+            <div class="stat-label">کل تولید (عدد)</div>
+        </div>
+        <div class="mini-stat">
+            <div class="stat-icon" style="background:var(--grad-success);"><i class="fas fa-calendar-check"></i></div>
+            <div class="stat-value" style="color:var(--success);">{{ total_records }}</div>
+            <div class="stat-label">تعداد رکوردها</div>
+        </div>
+        <div class="mini-stat">
+            <div class="stat-icon" style="background:var(--grad-info);"><i class="fas fa-boxes"></i></div>
+            <div class="stat-value" style="color:var(--info);">{{ products_summary|length }}</div>
+            <div class="stat-label">انواع محصول</div>
+        </div>
+        <div class="mini-stat">
+            <div class="stat-icon" style="background:var(--grad-warning);"><i class="fas fa-clock"></i></div>
+            <div class="stat-value" style="color:var(--warning);">{{ daily_summary|length }}</div>
+            <div class="stat-label">روزهای فعال</div>
+        </div>
+    </div>
+
+    <!-- Personal Info -->
+    <div class="detail-card">
+        <div class="detail-card-header">
+            <i class="fas fa-id-card"></i> اطلاعات شخصی و شغلی
+        </div>
+        <div class="detail-card-body">
+            <div class="personal-grid">
+                <div class="personal-item">
+                    <i class="fas fa-id-card"></i>
+                    <div><div class="p-label">کد ملی</div><div class="p-value">{{ worker.national_id|default:"-" }}</div></div>
+                </div>
+                <div class="personal-item">
+                    <i class="fas fa-phone"></i>
+                    <div><div class="p-label">تلفن</div><div class="p-value">{{ worker.phone|default:"-" }}</div></div>
+                </div>
+                <div class="personal-item">
+                    <i class="fas fa-phone-volume"></i>
+                    <div><div class="p-label">تلفن اضطراری</div><div class="p-value">{{ worker.emergency_phone|default:"-" }}</div></div>
+                </div>
+                <div class="personal-item">
+                    <i class="fas fa-calendar"></i>
+                    <div><div class="p-label">تاریخ تولد</div><div class="p-value">{% if worker.birth_date %}{{ worker.birth_date|to_jalali }}{% else %}-{% endif %}</div></div>
+                </div>
+                <div class="personal-item">
+                    <i class="fas fa-briefcase"></i>
+                    <div><div class="p-label">تاریخ استخدام</div><div class="p-value">{% if worker.hire_date %}{{ worker.hire_date|to_jalali }}{% else %}-{% endif %}</div></div>
+                </div>
+                <div class="personal-item">
+                    <i class="fas fa-star"></i>
+                    <div><div class="p-label">مهارت اصلی</div><div class="p-value">{{ worker.skill|default:"-" }}</div></div>
+                </div>
+                <div class="personal-item">
+                    <i class="fas fa-award"></i>
+                    <div><div class="p-label">تجربه</div><div class="p-value">{{ worker.experience_years }} سال</div></div>
+                </div>
+                <div class="personal-item">
+                    <i class="fas fa-money-bill"></i>
+                    <div><div class="p-label">حقوق</div><div class="p-value">{{ worker.salary|currency_format }} ریال</div></div>
+                </div>
+                <div class="personal-item">
+                    <i class="fas fa-shield-alt"></i>
+                    <div><div class="p-label">شماره بیمه</div><div class="p-value">{{ worker.insurance_number|default:"-" }}</div></div>
+                </div>
+            </div>
+            {% if worker.address %}
+            <div style="margin-top:10px;padding:8px 12px;background:rgba(99,102,241,0.03);border-radius:var(--radius-sm);font-size:0.78rem;">
+                <i class="fas fa-map-marker-alt ms-1" style="color:var(--accent);"></i> {{ worker.address }}
+            </div>
+            {% endif %}
+            {% if worker.description %}
+            <div style="margin-top:8px;padding:8px 12px;background:rgba(99,102,241,0.03);border-radius:var(--radius-sm);font-size:0.78rem;">
+                <i class="fas fa-info-circle ms-1" style="color:var(--accent);"></i> {{ worker.description }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Products Summary -->
+    {% if products_summary %}
+    <div class="detail-card">
+        <div class="detail-card-header">
+            <i class="fas fa-box"></i> خلاصه محصولات تولید شده
+        </div>
+        <div class="detail-card-body">
+            <div class="products-grid">
+                {% for p in products_summary %}
+                <div class="product-item">
+                    <div>
+                        <div class="prod-name">{{ p.product__name }}</div>
+                        <div class="prod-code">{{ p.product__code }}</div>
+                    </div>
+                    <div class="prod-qty">{{ p.total_qty }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Date Filter -->
+    <form method="get" class="filter-bar">
+        <div class="fg">
+            <label><i class="fas fa-calendar ms-1"></i> از تاریخ</label>
+            <input type="text" name="date_from" value="{{ date_from }}" class="jalali-date" placeholder="تاریخ شروع" readonly>
+        </div>
+        <div class="fg">
+            <label><i class="fas fa-calendar ms-1"></i> تا تاریخ</label>
+            <input type="text" name="date_to" value="{{ date_to }}" class="jalali-date" placeholder="تاریخ پایان" readonly>
+        </div>
+        <div style="display:flex;gap:6px;align-self:flex-end;">
+            <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-filter ms-1"></i> فیلتر</button>
+            {% if date_from or date_to %}
+            <a href="{% url 'worker_detail' worker.pk %}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-times ms-1"></i> پاک کردن</a>
+            {% endif %}
+        </div>
+    </form>
+
+    <!-- Production Records -->
+    <div class="detail-card">
+        <div class="detail-card-header">
+            <i class="fas fa-list"></i> رکوردهای تولید
+            <span class="badge bg-primary me-auto">{{ productions|length }} رکورد</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>محصول</th>
+                        <th>تعداد</th>
+                        <th>تاریخ</th>
+                        <th>وضعیت</th>
+                        <th>یادداشت</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for dp in productions %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td style="font-weight:500;">
+                            {{ dp.product.name }}
+                            <br><span style="font-size:0.65rem;color:var(--text-secondary);">{{ dp.product.code }}</span>
+                        </td>
+                        <td><span style="font-weight:700;color:var(--accent-light);">{{ dp.quantity }}</span></td>
+                        <td>{{ dp.production_date|to_jalali }}</td>
+                        <td>
+                            {% if dp.status == 'completed' %}
+                            <span class="badge bg-success">تکمیل</span>
+                            {% else %}
+                            <span class="badge bg-warning">در انتظار</span>
+                            {% endif %}
+                        </td>
+                        <td style="font-size:0.75rem;color:var(--text-secondary);">{{ dp.notes|default:"-"|truncatewords:5 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="empty-state" style="padding:30px;">
+                            <i class="fas fa-inbox d-block mb-2" style="font-size:1.8rem;"></i>
+                            رکوردی یافت نشد
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

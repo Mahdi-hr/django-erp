@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+{% block page_icon %}warehouse{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="animate-in">
+    <div class="row justify-content-center">
+        <div class="col-lg-11">
+            <div class="card cln-card">
+                <div class="card-header">
+                    <h5><i class="fas fa-box-open ms-2"></i> {{ title }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="product-purchase-form">
+                        {% csrf_token %}
+
+                        <!-- Purchase Date - outside table -->
+                        <div class="mb-4" style="margin-bottom:24px !important;">
+                            <label class="form-label" style="font-size:0.85rem;"><i class="fas fa-calendar-alt ms-1" style="color:var(--info);"></i> تاریخ خرید</label>
+                            <input type="text" id="global-purchase-date" class="form-control jalali-date" readonly placeholder="انتخاب تاریخ خرید..." style="max-width:220px; cursor:pointer; font-size:0.82rem; padding:6px 12px;">
+                            <input type="hidden" id="global-purchase-date-gregorian" name="global_purchase_date" value="">
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="mb-0" style="font-size:1.05rem; font-weight:600;"><i class="fas fa-box ms-2" style="color:var(--info);"></i> اقلام خرید</h5>
+                            <button type="button" class="cln-btn-add" id="add-row-btn">
+                                <i class="fas fa-plus"></i> افزودن ردیف
+                            </button>
+                        </div>
+
+                        {{ formset.management_form }}
+
+                        <div class="table-responsive">
+                            <table class="table cln-table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th style="width:25%">محصول</th>
+                                        <th style="width:12%">مقدار</th>
+                                        <th style="width:15%">قیمت واحد</th>
+                                        <th style="width:15%">جمع</th>
+                                        <th style="width:15%">تامین‌کننده</th>
+                                        <th style="width:10%">شماره فاکتور</th>
+                                        <th style="width:5%"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="items-body">
+                                    {% for f in formset %}
+                                    <tr class="item-row">
+                                        <td>{{ f.product }}</td>
+                                        <td>{{ f.quantity }}</td>
+                                        <td>{{ f.unit_price }}</td>
+                                        <td class="row-total" style="font-weight:700; color:var(--accent-light); white-space:nowrap;">—</td>
+                                        <td>{{ f.supplier }}</td>
+                                        <td>{{ f.invoice_number }}</td>
+                                        <td style="text-align:center;">
+                                            {{ f.id }}
+                                            {{ f.purchase_date }}
+                                            {{ f.notes }}
+                                            {{ f.DELETE }}
+                                            <button type="button" class="cln-btn-del del-btn" title="حذف ردیف"><i class="fas fa-trash-alt"></i></button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Summary -->
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0; background:var(--bg-table-row); border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; margin-top:12px; max-width:400px;">
+                            <div style="text-align:center; padding:12px 8px; border-left:1px solid var(--border);">
+                                <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:4px;">تعداد ردیف‌ها</div>
+                                <div style="font-size:1rem; font-weight:700; color:var(--text-primary);" id="sum-count">۰</div>
+                            </div>
+                            <div style="text-align:center; padding:12px 8px;">
+                                <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:4px;">جمع کل خرید</div>
+                                <div style="font-size:1.1rem; font-weight:700; color:var(--success);" id="sum-total">۰ ریال</div>
+                            </div>
+                        </div>
+
+                        <div class="cln-actions">
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-save ms-1"></i> ذخیره</button>
+                            <a href="{% url 'product_purchase_list' %}" class="btn btn-outline-secondary"><i class="fas fa-arrow-right ms-1"></i> بازگشت</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script id="product-prices-data" type="application/json">{{ product_prices_json|safe }}</script>
+
+<script>
+(function() {
+    const prices = JSON.parse(document.getElementById('product-prices-data').textContent);
+    const totalForms = document.querySelector('[name$="-TOTAL_FORMS"]');
+    const prefix = totalForms.name.replace('-TOTAL_FORMS', '');
+    const tbody = document.getElementById('items-body');
+    const firstSel = tbody.querySelector('select[name$="-product"]');
+    const prodOpts = firstSel ? firstSel.innerHTML : '';
+
+    function fmt(v) {
+        return new Intl.NumberFormat('fa-IR').format(Math.round(v)) + ' ریال';
+    }
+
+    function styleRow(row) {
+        row.querySelectorAll('select[name$="-product"]').forEach(s => { s.className = 'tbl-sel'; s.removeAttribute('style'); });
+        row.querySelectorAll('input[name$="-quantity"], input[name$="-unit_price"], input[name$="-supplier"], input[name$="-invoice_number"]').forEach(i => {
+            i.className = 'tbl-inp'; i.removeAttribute('style');
+        });
+        row.querySelectorAll('input[name$="-DELETE"], input[name$="-id"], textarea[name$="-notes"]').forEach(i => {
+            i.style.display = 'none';
+        });
+        // Hide per-row date inputs (global date picker handles dates)
+        row.querySelectorAll('.jalali-date, input[name$="-purchase_date"]').forEach(i => {
+            i.style.display = 'none';
+        });
+        // Sync global date to this row's hidden purchase_date
+        var dateInput = row.querySelector('input[name$="-purchase_date"]');
+        var globalDate = document.getElementById('global-purchase-date-gregorian');
+        if (dateInput && globalDate) {
+            dateInput.value = globalDate.value;
+        }
+    }
+
+    // Sync global date to all rows when changed
+    var globalDatePicker = document.getElementById('global-purchase-date');
+    var globalDateGreg = document.getElementById('global-purchase-date-gregorian');
+    if (globalDatePicker) {
+        globalDatePicker.addEventListener('change', function() {
+            var v = this.value;
+            if (v && v.indexOf('/') > -1) {
+                var p = v.split('/');
+                try {
+                    var jDate = new jalaliDate(parseInt(p[0]), parseInt(p[1]), parseInt(p[2]));
+                    globalDateGreg.value = jDate.toGregorian();
+                } catch(e) {}
+            }
+            // Sync to all rows
+            tbody.querySelectorAll('input[name$="-purchase_date"]').forEach(function(inp) {
+                inp.value = globalDateGreg.value;
+            });
+        });
+    }
+
+    function recalc() {
+        let total = 0, count = 0;
+        tbody.querySelectorAll('.item-row').forEach(row => {
+            if (row.style.display === 'none') return;
+            const sel = row.querySelector('select[name$="-product"]');
+            const qty = parseInt(row.querySelector('input[name$="-quantity"]')?.value) || 0;
+            const price = parseFloat(row.querySelector('input[name$="-unit_price"]')?.value) || 0;
+            const totalCell = row.querySelector('.row-total');
+            const rc = qty * price;
+            if (totalCell) totalCell.textContent = rc > 0 ? fmt(rc) : '—';
+            total += rc;
+            if (sel && sel.value && qty > 0) count++;
+        });
+        document.getElementById('sum-count').textContent = count;
+        document.getElementById('sum-total').textContent = fmt(total);
+    }
+
+    function bindDel() {
+        tbody.querySelectorAll('.del-btn').forEach(btn => {
+            btn.onclick = function() {
+                const row = this.closest('tr');
+                const delCb = row.querySelector('input[name$="-DELETE"]');
+                const nameInput = row.querySelector('input[name$="-id"]');
+                if (delCb && nameInput && nameInput.value) {
+                    delCb.checked = true;
+                    row.style.display = 'none';
+                } else {
+                    row.remove();
+                    totalForms.value = tbody.querySelectorAll('.item-row').length;
+                }
+                recalc();
+            };
+        });
+    }
+
+    // Auto-fill price when product changes
+    tbody.addEventListener('change', function(e) {
+        if (e.target.matches('select[name$="-product"]')) {
+            const row = e.target.closest('tr');
+            const priceInput = row.querySelector('input[name$="-unit_price"]');
+            if (priceInput && prices[e.target.value]) {
+                priceInput.value = prices[e.target.value];
+            }
+        }
+    });
+
+    document.getElementById('add-row-btn').addEventListener('click', function() {
+        const idx = parseInt(totalForms.value);
+        const tr = document.createElement('tr');
+        tr.className = 'item-row';
+        tr.innerHTML =
+            '<td><select name="' + prefix + '-' + idx + '-product" class="tbl-sel"><option value="---------">----------</option>' + prodOpts + '</select></td>' +
+            '<td><input name="' + prefix + '-' + idx + '-quantity" type="number" class="tbl-inp"></td>' +
+            '<td><input name="' + prefix + '-' + idx + '-unit_price" type="number" class="tbl-inp"></td>' +
+            '<td class="row-total" style="font-weight:700;color:var(--accent-light);white-space:nowrap;">—</td>' +
+            '<td><input name="' + prefix + '-' + idx + '-supplier" type="text" class="tbl-inp" maxlength="200"></td>' +
+            '<td><input name="' + prefix + '-' + idx + '-invoice_number" type="text" class="tbl-inp" maxlength="100"></td>' +
+            '<td style="text-align:center;">' +
+                '<input type="hidden" name="' + prefix + '-' + idx + '-id" value="">' +
+                '<input type="hidden" name="' + prefix + '-' + idx + '-purchase_date" value="' + (globalDateGreg ? globalDateGreg.value : '') + '">' +
+                '<textarea name="' + prefix + '-' + idx + '-notes" style="display:none;"></textarea>' +
+                '<input type="checkbox" name="' + prefix + '-' + idx + '-DELETE" style="display:none;">' +
+                '<button type="button" class="cln-btn-del del-btn" title="حذف ردیف"><i class="fas fa-trash-alt"></i></button>' +
+            '</td>';
+        tbody.appendChild(tr);
+        totalForms.value = tbody.querySelectorAll('.item-row').length;
+        bindDel();
+        recalc();
+    });
+
+    tbody.querySelectorAll('.item-row').forEach(row => { styleRow(row); });
+    bindDel();
+    tbody.addEventListener('change', recalc);
+    tbody.addEventListener('input', recalc);
+    recalc();
+})();
+</script>
+{% endblock %}

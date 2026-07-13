@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% load jalali_filters %}
+
+{% block title %}جزئیات مشتری - {{ customer.name }}{% endblock %}
+{% block page_icon %}users{% endblock %}
+{% block page_title %}{{ customer.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 style="margin:0;color:var(--text-primary);"><i class="fas fa-user ms-2" style="color:var(--accent);"></i> {{ customer.name }}</h5>
+    <div class="d-flex gap-2">
+        <a href="{% url 'customer_edit' customer.pk %}" class="btn btn-primary">
+            <i class="fas fa-edit ms-1"></i> ویرایش
+        </a>
+        <a href="{% url 'customer_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-right ms-1"></i> بازگشت
+        </a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Customer Info -->
+    <div class="col-md-8">
+        <div class="card animate-in">
+            <div class="card-header">
+                <i class="fas fa-id-card" style="color:var(--accent);"></i> اطلاعات مشتری
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">نام</label>
+                        <div style="font-weight:500;color:var(--text-primary);">{{ customer.name }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">شرکت</label>
+                        <div style="color:var(--text-primary);">{{ customer.company|default:"-" }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">تلفن</label>
+                        <div><code style="background:var(--bg-input);padding:2px 8px;border-radius:6px;color:var(--text-primary);">{{ customer.phone|default:"-" }}</code></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">ایمیل</label>
+                        <div style="color:var(--text-primary);">{{ customer.email|default:"-" }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">شهر</label>
+                        <div style="color:var(--text-primary);">{{ customer.city|default:"-" }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">آدرس</label>
+                        <div style="color:var(--text-primary);">{{ customer.address|default:"-" }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">کد ملی</label>
+                        <div style="color:var(--text-primary);">{{ customer.national_id|default:"-" }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">شماره مالیاتی</label>
+                        <div style="color:var(--text-primary);">{{ customer.tax_number|default:"-" }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">مانده حساب</label>
+                        <div class="{% if customer.is_debtor %}text-danger{% elif customer.is_creditor %}text-success{% endif %}" style="font-weight:700;font-size:1.1rem;">
+                            {{ customer.total_debt|currency_format }} {{ currency }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoices -->
+    <div class="col-md-4">
+        <div class="card animate-in">
+            <div class="card-header">
+                <i class="fas fa-file-invoice" style="color:var(--success);"></i> فاکتورها
+                <span class="badge bg-success me-auto">{{ invoices|length }}</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>شماره</th>
+                            <th>مبلغ</th>
+                            <th>وضعیت</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for inv in invoices %}
+                        <tr>
+                            <td style="font-weight:500;">
+                                <a href="{% url 'invoice_detail' inv.pk %}" style="color:var(--accent-light);text-decoration:none;">{{ inv.invoice_number }}</a>
+                            </td>
+                            <td style="color:var(--text-primary);">{{ inv.total|currency_format }}</td>
+                            <td>
+                                {% if inv.status == 'paid' %}
+                                <span class="badge bg-success"><i class="fas fa-check-circle ms-1" style="font-size:0.6rem;"></i> پرداخت شده</span>
+                                {% elif inv.status == 'partial' %}
+                                <span class="badge bg-warning"><i class="fas fa-hourglass-half ms-1" style="font-size:0.6rem;"></i> پرداخت جزئی</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ inv.get_status_display }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="empty-state" style="padding:30px;">
+                                <i class="fas fa-inbox d-block mb-2" style="font-size:1.5rem;"></i>
+                                فاکتوری ثبت نشده
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

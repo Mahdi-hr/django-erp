@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% load jalali_filters %}
+
+{% block title %}تنظیمات ارائه‌دهندگان{% endblock %}
+{% block page_icon %}sms{% endblock %}
+{% block page_title %}تنظیمات ارائه‌دهندگان پیامک{% endblock %}
+
+{% block content %}
+<!-- SMS Nav -->
+<div class="d-flex flex-wrap gap-2 mb-4 animate-in">
+    <a href="{% url 'sms_dashboard' %}" class="btn" style="background:linear-gradient(135deg,#6366f1,#818cf8);color:#fff;border-radius:var(--radius-full);padding:8px 18px;font-size:0.82rem;font-weight:500;display:inline-flex;align-items:center;gap:6px;">
+        <i class="fas fa-home" style="font-size:0.75rem;"></i> داشبورد
+    </a>
+    <a href="{% url 'send_sms' %}" class="btn" style="background:linear-gradient(135deg,#10b981,#34d399);color:#fff;border-radius:var(--radius-full);padding:8px 18px;font-size:0.82rem;font-weight:500;display:inline-flex;align-items:center;gap:6px;">
+        <i class="fas fa-paper-plane" style="font-size:0.75rem;"></i> ارسال تکی
+    </a>
+    <a href="{% url 'send_bulk_sms' %}" class="btn" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#0f172a;border-radius:var(--radius-full);padding:8px 18px;font-size:0.82rem;font-weight:500;display:inline-flex;align-items:center;gap:6px;">
+        <i class="fas fa-users" style="font-size:0.75rem;"></i> ارسال گروهی
+    </a>
+    <a href="{% url 'template_list' %}" class="btn" style="background:linear-gradient(135deg,#06b6d4,#22d3ee);color:#fff;border-radius:var(--radius-full);padding:8px 18px;font-size:0.82rem;font-weight:500;display:inline-flex;align-items:center;gap:6px;">
+        <i class="fas fa-file-alt" style="font-size:0.75rem;"></i> قالب‌ها
+    </a>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 style="margin:0; color:var(--text-primary);"><i class="fas fa-cog ms-2" style="color:var(--accent);"></i> تنظیمات ارائه‌دهندگان پیامک</h5>
+    <a href="{% url 'sms_dashboard' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-right ms-1"></i> بازگشت
+    </a>
+</div>
+
+<!-- Provider List -->
+<div class="card animate-in mb-4">
+    <div class="card-header">
+        <i class="fas fa-list"></i> لیست ارائه‌دهندگان
+        <span class="badge bg-primary me-auto">{{ configs|length }} ارائه‌دهنده</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>ارائه‌دهنده</th>
+                    <th>کلید API</th>
+                    <th>شماره فرستنده</th>
+                    <th>وضعیت</th>
+                    <th>عملیات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for config in configs %}
+                <tr>
+                    <td style="font-weight:500;">{{ config.get_provider_display }}</td>
+                    <td><code style="background:var(--bg-input);padding:2px 8px;border-radius:6px;font-size:0.75rem;">{{ config.api_key|truncatechars:20 }}</code></td>
+                    <td><code style="background:var(--bg-input);padding:2px 8px;border-radius:6px;">{{ config.sender_number }}</code></td>
+                    <td>
+                        {% if config.is_active %}
+                        <span class="badge bg-success"><i class="fas fa-check-circle ms-1" style="font-size:0.6rem;"></i> فعال</span>
+                        {% else %}
+                        <span class="badge bg-danger"><i class="fas fa-times-circle ms-1" style="font-size:0.6rem;"></i> غیرفعال</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'test_provider_api' config.pk %}" class="btn btn-sm btn-outline-success">
+                            <i class="fas fa-plug ms-1"></i> تست
+                        </a>
+                        {% if not config.is_active %}
+                        <a href="{% url 'activate_provider' config.pk %}" class="btn btn-sm btn-outline-warning">
+                            <i class="fas fa-power-off ms-1"></i> فعال‌سازی
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'provider_config_edit' config.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="empty-state" style="padding:40px;">
+                        <i class="fas fa-cog d-block mb-2" style="font-size:2rem;"></i>
+                        ارائه‌دهنده‌ای تعریف نشده
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- SMS Reports -->
+<div class="settings-section animate-in mb-4">
+    <h5><i class="fas fa-chart-bar"></i> گزارشات پیامک</h5>
+    <div class="row g-3">
+        <div class="col-md-3 col-6">
+            <a href="{% url 'sms_report_today' %}" class="action-card" style="min-height:100px;padding:16px 10px;">
+                <div class="action-icon" style="background:var(--grad-primary);width:40px;height:40px;font-size:1rem;"><i class="fas fa-calendar-day"></i></div>
+                <h6 style="font-size:0.82rem;">ارسال‌های امروز</h6>
+            </a>
+        </div>
+        <div class="col-md-3 col-6">
+            <a href="{% url 'sms_report_credit' %}" class="action-card" style="min-height:100px;padding:16px 10px;">
+                <div class="action-icon" style="background:var(--grad-success);width:40px;height:40px;font-size:1rem;"><i class="fas fa-wallet"></i></div>
+                <h6 style="font-size:0.82rem;">اعتبار حساب</h6>
+            </a>
+        </div>
+        <div class="col-md-3 col-6">
+            <a href="{% url 'sms_report_lines' %}" class="action-card" style="min-height:100px;padding:16px 10px;">
+                <div class="action-icon" style="background:var(--grad-info);width:40px;height:40px;font-size:1rem;"><i class="fas fa-hashtag"></i></div>
+                <h6 style="font-size:0.82rem;">شماره خطوط</h6>
+            </a>
+        </div>
+        <div class="col-md-3 col-6">
+            <a href="{% url 'sms_report_received' %}" class="action-card" style="min-height:100px;padding:16px 10px;">
+                <div class="action-icon" style="background:var(--grad-warning);width:40px;height:40px;font-size:1rem;"><i class="fas fa-inbox"></i></div>
+                <h6 style="font-size:0.82rem;">پیامک‌های دریافتی</h6>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Add SMS.ir -->
+{% if not configs|length %}
+<div class="settings-section animate-in">
+    <h5><i class="fas fa-bolt"></i> تنظیم سریع SMS.ir</h5>
+    <form method="post" action="{% url 'sms_quick_settings' %}">
+        {% csrf_token %}
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">کلید API</label>
+                <input type="text" name="api_key" class="form-control" placeholder="کلید API خود را وارد کنید">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">شماره فرستنده</label>
+                <input type="text" name="sender_number" class="form-control" placeholder="مثال: 30005005000">
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-save ms-1"></i> ذخیره و فعال‌سازی
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endif %}
+{% endblock %}

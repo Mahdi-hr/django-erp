@@ -1,0 +1,384 @@
+{% extends "base.html" %}
+
+{% block page_icon %}box{% endblock %}
+{% block page_title %}محصول{% endblock %}
+
+{% block extra_css %}
+<style>
+    .product-form .card { border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 12px; }
+    .product-form .card-header {
+        background: var(--bg-table-header) !important;
+        border-bottom: 1px solid var(--border);
+        padding: 10px 16px;
+        border-radius: var(--radius-md) var(--radius-md) 0 0 !important;
+    }
+    .product-form .card-header h5 { font-size: 0.95rem; margin: 0; font-weight: 600; }
+    .product-form .card-body { padding: 14px 16px; }
+    .product-form .form-label { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 4px; font-weight: 500; }
+    .product-form .form-control, .product-form .form-select {
+        background: var(--bg-input) !important;
+        border: 1px solid var(--border);
+        color: var(--text-primary) !important;
+        border-radius: var(--radius-sm);
+        padding: 6px 10px;
+        font-size: 0.85rem;
+        height: 36px;
+    }
+    .product-form .form-control:focus, .product-form .form-select:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px rgba(99,102,241,0.15);
+    }
+    .product-form textarea.form-control { height: auto; min-height: 60px; padding: 8px 10px; }
+    .product-form .form-check-input { width: 1.1em; height: 1.1em; margin-top: 2px; }
+    .product-form .form-check-label { font-size: 0.85rem; color: var(--text-secondary) !important; }
+
+    /* Two-column layout */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+    .form-grid .full-width { grid-column: 1 / -1; }
+    @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } }
+
+    /* BOM Table */
+    .bom-table { font-size: 0.82rem; }
+    .bom-table thead th {
+        background: var(--bg-table-header) !important;
+        color: var(--text-secondary) !important;
+        font-weight: 600;
+        font-size: 0.75rem;
+        padding: 8px 10px;
+        border: none;
+        white-space: nowrap;
+    }
+    .bom-table tbody td {
+        padding: 5px 6px; vertical-align: middle;
+        border-color: var(--border);
+    }
+    .bom-table tbody tr { background: var(--bg-table-row) !important; }
+    .bom-table tbody tr:hover { background: var(--bg-table-row-hover) !important; }
+    .bom-table tbody tr:nth-child(even) { background: rgba(99,102,241,0.03) !important; }
+    .bom-table .bom-select, .bom-table .bom-input {
+        width: 100%; background: var(--bg-input) !important;
+        border: 1px solid var(--border); color: var(--text-primary) !important;
+        border-radius: var(--radius-sm);
+        padding: 4px 8px; font-size: 0.8rem; height: 32px;
+        font-family: inherit;
+    }
+    .bom-table .bom-select:focus, .bom-table .bom-input:focus {
+        border-color: var(--accent); outline: none;
+    }
+    .bom-table .row-cost {
+        font-weight: 700; color: var(--accent-light);
+        font-size: 0.8rem; white-space: nowrap;
+        min-width: 90px; text-align: left;
+    }
+
+    /* Add row button */
+    .btn-add-row {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 5px 14px; font-size: 0.8rem;
+        border: 1px dashed var(--accent);
+        color: var(--accent-light);
+        background: rgba(99,102,241,0.06);
+        border-radius: var(--radius-sm);
+        cursor: pointer; transition: all 0.2s;
+    }
+    .btn-add-row:hover { background: rgba(99,102,241,0.15); color: var(--accent); }
+
+    /* Delete button */
+    .btn-del-row {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 28px; height: 28px; border: none;
+        background: rgba(239,68,68,0.1); color: #ef4444;
+        border-radius: 6px; cursor: pointer;
+        transition: all 0.2s; font-size: 0.75rem;
+    }
+    .btn-del-row:hover { background: rgba(239,68,68,0.25); transform: scale(1.1); }
+
+    /* Cost Summary */
+    .cost-summary {
+        display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0;
+        background: var(--bg-table-row);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+    }
+    .cost-item {
+        text-align: center; padding: 14px 10px;
+        border-left: 1px solid var(--border);
+    }
+    .cost-item:last-child { border-left: none; }
+    .cost-item .cost-label {
+        font-size: 0.72rem; color: var(--text-muted);
+        margin-bottom: 4px; text-transform: uppercase;
+    }
+    .cost-item .cost-value {
+        font-size: 1.1rem; font-weight: 700;
+        font-variant-numeric: tabular-nums;
+    }
+    .cost-item.primary .cost-value { color: var(--accent-light); font-size: 1.25rem; }
+    .cost-item.fixed .cost-value { color: var(--text-secondary); }
+    .cost-item.total .cost-value { color: var(--success); font-size: 1.3rem; }
+
+    /* Actions */
+    .form-actions { display: flex; gap: 8px; margin-top: 14px; }
+    .form-actions .btn { padding: 7px 20px; font-size: 0.85rem; border-radius: var(--radius-sm); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="product-form animate-in">
+    <div class="row justify-content-center">
+        <div class="col-lg-11">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-{% if product %}edit{% else %}plus{% endif %} ms-2"></i> {{ title }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" id="product-form">
+                        {% csrf_token %}
+
+                        <!-- Basic Info -->
+                        <div class="form-grid mb-3">
+                            <div>
+                                <label class="form-label">{{ form.name.label }}</label>
+                                {{ form.name }}
+                                {% if form.name.errors %}<div class="text-danger small">{{ form.name.errors }}</div>{% endif %}
+                            </div>
+                            <div>
+                                <label class="form-label">{{ form.code.label }}</label>
+                                {{ form.code }}
+                                {% if form.code.errors %}<div class="text-danger small">{{ form.code.errors }}</div>{% endif %}
+                            </div>
+                            <div>
+                                <label class="form-label">{{ form.barcode.label }}</label>
+                                {{ form.barcode }}
+                            </div>
+                            <div>
+                                <label class="form-label">{{ form.category.label }}</label>
+                                {{ form.category }}
+                            </div>
+                            <div>
+                                <label class="form-label">{{ form.profit_percent.label }}</label>
+                                {{ form.profit_percent }}
+                            </div>
+                            <div>
+                                <label class="form-label">{{ form.fixed_profit.label }}</label>
+                                {{ form.fixed_profit }}
+                            </div>
+                            <div class="d-flex align-items-end pb-1">
+                                <div class="form-check">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">{{ form.is_active.label }}</label>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="form-label">{{ form.current_stock.label }}</label>
+                                {{ form.current_stock }}
+                            </div>
+                            <div class="full-width">
+                                <label class="form-label">{{ form.description.label }}</label>
+                                {{ form.description }}
+                            </div>
+                        </div>
+
+                        <!-- BOM Section -->
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="mb-0" style="font-size:1.05rem; font-weight:600; color:var(--text-primary);"><i class="fas fa-cubes ms-2" style="color:var(--accent);"></i> مواد اولیه مصرفی (BOM)</h5>
+                            <button type="button" class="btn-add-row" id="add-row-btn">
+                                <i class="fas fa-plus"></i> افزودن ردیف
+                            </button>
+                        </div>
+
+                        {{ formset.management_form }}
+
+                        <div class="table-responsive">
+                            <table class="table bom-table mb-0" id="bom-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width:35%">ماده اولیه</th>
+                                        <th style="width:20%">مقدار</th>
+                                        <th style="width:15%">واحد</th>
+                                        <th style="width:20%">هزینه</th>
+                                        <th style="width:10%; text-align:center;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="formset-body">
+                                    {% for f in formset %}
+                                    <tr class="formset-row">
+                                        <td>{{ f.material }}</td>
+                                        <td>{{ f.quantity }}</td>
+                                        <td>{{ f.unit }}</td>
+                                        <td class="row-cost">—</td>
+                                        <td style="text-align:center;">
+                                            {{ f.id }}
+                                            {{ f.DELETE }}
+                                            <button type="button" class="btn-del-row del-btn" title="حذف ردیف"><i class="fas fa-trash-alt"></i></button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Cost Summary -->
+                        <div class="cost-summary mt-3">
+                            <div class="cost-item primary">
+                                <div class="cost-label">هزینه مواد اولیه</div>
+                                <div class="cost-value" id="total-material">۰ ریال</div>
+                            </div>
+                            <div class="cost-item fixed">
+                                <div class="cost-label">هزینه‌های ثابت و سرویس</div>
+                                <div class="cost-value" id="total-fixed">—</div>
+                            </div>
+                            <div class="cost-item total">
+                                <div class="cost-label">قیمت تمام‌شده نهایی</div>
+                                <div class="cost-value" id="total-cost">۰ ریال</div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save ms-1"></i> ذخیره
+                            </button>
+                            <a href="{% url 'product_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-right ms-1"></i> بازگشت
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Material prices JSON for JS -->
+<script id="material-prices-data" type="application/json">{{ material_prices_json|safe }}</script>
+
+<script>
+(function() {
+    const prices = JSON.parse(document.getElementById('material-prices-data').textContent);
+    const fixedCost = parseInt('{{ fixed_cost_total|default:"0" }}') || 0;
+    const totalForms = document.querySelector('[name$="-TOTAL_FORMS"]');
+    const tbody = document.getElementById('formset-body');
+
+    // Detect the formset prefix dynamically from the TOTAL_FORMS input name
+    const prefix = totalForms.name.replace('-TOTAL_FORMS', '');
+
+    // Get the material select options from the first existing row
+    const firstSelect = tbody.querySelector('select[name$="-material"]');
+    const materialOptionsHTML = firstSelect ? firstSelect.innerHTML : '';
+
+    function fmt(v) {
+        return new Intl.NumberFormat('fa-IR').format(Math.round(v)) + ' ریال';
+    }
+
+    // Style native form widgets inside table rows
+    function styleRow(row) {
+        row.querySelectorAll('select[name$="-material"]').forEach(s => {
+            s.className = 'bom-select';
+            s.removeAttribute('style');
+        });
+        row.querySelectorAll('input[name$="-quantity"]').forEach(i => {
+            i.className = 'bom-input';
+            i.type = 'number';
+            i.step = '0.0001';
+            i.removeAttribute('style');
+        });
+        row.querySelectorAll('input[name$="-unit"]').forEach(i => {
+            i.className = 'bom-input';
+            i.removeAttribute('style');
+        });
+        // Hide DELETE checkbox and id input
+        row.querySelectorAll('input[name$="-DELETE"], input[name$="-id"]').forEach(i => {
+            i.style.display = 'none';
+        });
+    }
+
+    function recalc() {
+        let total = 0;
+        tbody.querySelectorAll('.formset-row').forEach(row => {
+            if (row.style.display === 'none') return;
+            const sel = row.querySelector('select[name$="-material"]');
+            const inp = row.querySelector('input[name$="-quantity"]');
+            const cost = row.querySelector('.row-cost');
+            if (!sel || !inp || !cost) return;
+            const p = prices[sel.value] || 0;
+            const q = parseFloat(inp.value) || 0;
+            const rc = q * p;
+            cost.textContent = rc > 0 ? fmt(rc) : '—';
+            total += rc;
+        });
+        document.getElementById('total-material').textContent = fmt(total);
+        document.getElementById('total-fixed').textContent = fmt(fixedCost);
+        document.getElementById('total-cost').textContent = fmt(total + fixedCost);
+    }
+
+    // Delete row
+    function bindDelButtons() {
+        tbody.querySelectorAll('.del-btn').forEach(btn => {
+            btn.onclick = function() {
+                const row = this.closest('tr');
+                const delCb = row.querySelector('input[name$="-DELETE"]');
+                const nameInput = row.querySelector('input[name$="-id"]');
+                if (delCb && nameInput && nameInput.value) {
+                    delCb.checked = true;
+                    row.style.display = 'none';
+                } else {
+                    row.remove();
+                    totalForms.value = tbody.querySelectorAll('.formset-row:not([style*="display: none"])').length;
+                }
+                recalc();
+            };
+        });
+    }
+
+    // Add row
+    document.getElementById('add-row-btn').addEventListener('click', function() {
+        const idx = parseInt(totalForms.value);
+        const tr = document.createElement('tr');
+        tr.className = 'formset-row';
+
+        tr.innerHTML =
+            '<td><select name="' + prefix + '-' + idx + '-material" class="bom-select"><option value="---------">----------</option>' + materialOptionsHTML + '</select></td>' +
+            '<td><input name="' + prefix + '-' + idx + '-quantity" type="number" step="0.0001" class="bom-input"></td>' +
+            '<td><input name="' + prefix + '-' + idx + '-unit" type="text" value="kg" class="bom-input"></td>' +
+            '<td class="row-cost">—</td>' +
+            '<td style="text-align:center;">' +
+                '<input type="hidden" name="' + prefix + '-' + idx + '-id" value="">' +
+                '<input type="checkbox" name="' + prefix + '-' + idx + '-DELETE" style="display:none;">' +
+                '<button type="button" class="btn-del-row del-btn" title="حذف ردیف"><i class="fas fa-trash-alt"></i></button>' +
+            '</td>';
+
+        tbody.appendChild(tr);
+        totalForms.value = tbody.querySelectorAll('.formset-row').length;
+        bindDelButtons();
+        recalc();
+    });
+
+    // Style existing rows
+    tbody.querySelectorAll('.formset-row').forEach(row => {
+        styleRow(row);
+        // Add delete button if missing
+        if (!row.querySelector('.del-btn')) {
+            const td = row.querySelector('td:last-child');
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn-del-row del-btn';
+            btn.title = 'حذف ردیف';
+            btn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+            td.appendChild(btn);
+        }
+    });
+
+    bindDelButtons();
+
+    // Delegated events
+    tbody.addEventListener('change', recalc);
+    tbody.addEventListener('input', recalc);
+
+    // Initial
+    document.getElementById('total-fixed').textContent = fmt(fixedCost);
+    recalc();
+})();
+</script>
+{% endblock %}

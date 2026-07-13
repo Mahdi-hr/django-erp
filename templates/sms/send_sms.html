@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load jalali_filters %}
+
+{% block title %}ارسال پیامک{% endblock %}
+{% block page_icon %}sms{% endblock %}
+{% block page_title %}ارسال پیامک{% endblock %}
+
+{% block content %}
+<!-- SMS Nav -->
+<div class="d-flex flex-wrap gap-2 mb-4 animate-in">
+    <a href="{% url 'sms_dashboard' %}" class="btn" style="background:linear-gradient(135deg,#6366f1,#818cf8);color:#fff;border-radius:var(--radius-full);padding:8px 18px;font-size:0.82rem;font-weight:500;display:inline-flex;align-items:center;gap:6px;">
+        <i class="fas fa-home" style="font-size:0.75rem;"></i> داشبورد
+    </a>
+    <a href="{% url 'send_sms' %}" class="btn" style="background:linear-gradient(135deg,#10b981,#34d399);color:#fff;border-radius:var(--radius-full);padding:8px 18px;font-size:0.82rem;font-weight:500;display:inline-flex;align-items:center;gap:6px;">
+        <i class="fas fa-paper-plane" style="font-size:0.75rem;"></i> ارسال تکی
+    </a>
+    <a href="{% url 'send_bulk_sms' %}" class="btn" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#0f172a;border-radius:var(--radius-full);padding:8px 18px;font-size:0.82rem;font-weight:500;display:inline-flex;align-items:center;gap:6px;">
+        <i class="fas fa-users" style="font-size:0.75rem;"></i> ارسال گروهی
+    </a>
+    <a href="{% url 'template_list' %}" class="btn" style="background:linear-gradient(135deg,#06b6d4,#22d3ee);color:#fff;border-radius:var(--radius-full);padding:8px 18px;font-size:0.82rem;font-weight:500;display:inline-flex;align-items:center;gap:6px;">
+        <i class="fas fa-file-alt" style="font-size:0.75rem;"></i> قالب‌ها
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card cln-card animate-in">
+            <div class="card-header">
+                <i class="fas fa-paper-plane" style="color:var(--accent);"></i> ارسال پیامک
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {% for field in form %}
+                    {% if field.name != 'template' %}
+                    <div class="mb-3">
+                        <label class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                        <div class="text-danger small mt-1">{{ field.errors }}</div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if templates_list %}
+                    <div class="mb-3">
+                        <label class="form-label" style="font-weight:600;"><i class="fas fa-file-alt ms-1" style="color:var(--warning);"></i> انتخاب قالب (اختیاری)</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for tpl in templates_list %}
+                            <button type="button" class="btn btn-sm template-pick" data-body="{{ tpl.body|escape }}" style="background:var(--bg-input);color:var(--text-secondary);border:1px solid var(--border);border-radius:var(--radius-full);font-size:0.78rem;">
+                                <i class="fas fa-file-alt ms-1"></i> {{ tpl.name }}
+                            </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="cln-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane ms-1"></i> ارسال
+                        </button>
+                        <a href="{% url 'sms_dashboard' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-right ms-1"></i> بازگشت
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.querySelectorAll('.template-pick').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const textarea = document.querySelector('textarea[name="message"]');
+        if (textarea) {
+            textarea.value = this.dataset.body;
+            textarea.focus();
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block page_icon %}cog{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="animate-in">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="card cln-card">
+                <div class="card-header">
+                    <h5><i class="fas fa-receipt ms-2"></i> {{ title }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="cln-grid">
+                            <div>
+                                <label class="form-label">نام</label>
+                                <input type="text" name="name" class="form-control" value="{{ fc.name|default:'' }}" required>
+                            </div>
+                            <div>
+                                <label class="form-label">مبلغ (ریال)</label>
+                                <input type="number" name="amount" class="form-control" value="{{ fc.amount|default:'' }}" required>
+                            </div>
+                            <div class="full-width">
+                                <label class="form-label">دسته‌بندی</label>
+                                <input type="text" name="category" class="form-control" value="{{ fc.category|default:'' }}">
+                            </div>
+                            {% if fc %}
+                            <div>
+                                <div class="form-check">
+                                    <input type="checkbox" name="is_active" class="form-check-input" {% if fc.is_active %}checked{% endif %}>
+                                    <label class="form-check-label">فعال</label>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="cln-actions">
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-save ms-1"></i> ذخیره</button>
+                            <a href="{% url 'settings_dashboard' %}" class="btn btn-outline-secondary"><i class="fas fa-arrow-right ms-1"></i> بازگشت</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,395 @@
+{% extends "base.html" %}
+{% load jalali_filters %}
+
+{% block page_icon %}tachometer-alt{% endblock %}
+{% block page_title %}داشبورد{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===== Hero Stats ===== */
+    .db-hero { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px; }
+    @media(max-width:992px){ .db-hero { grid-template-columns:repeat(2,1fr); } }
+    @media(max-width:576px){ .db-hero { grid-template-columns:1fr; } }
+
+    .db-card {
+        background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg);
+        padding:18px 20px; position:relative; overflow:hidden; transition:all .25s;
+        backdrop-filter:blur(12px); text-decoration:none; display:block;
+    }
+    .db-card:hover { border-color:var(--border-hover); transform:translateY(-3px); box-shadow:var(--shadow-lg); }
+    .db-card .db-icon {
+        width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center;
+        font-size:1.05rem; margin-bottom:12px;
+    }
+    .db-card .db-value {
+        font-size:1.3rem; font-weight:700; color:var(--text-primary); font-variant-numeric:tabular-nums; line-height:1.2;
+    }
+    .db-card .db-label { font-size:0.73rem; color:var(--text-muted); margin-top:3px; }
+    .db-card .db-glow {
+        position:absolute; top:-30px; right:-30px; width:100px; height:100px;
+        border-radius:50%; opacity:0.06; pointer-events:none;
+    }
+    .db-card .db-trend {
+        display:inline-flex; align-items:center; gap:4px; font-size:0.7rem; font-weight:600;
+        padding:2px 8px; border-radius:20px; margin-top:6px;
+    }
+
+    /* ===== Charts ===== */
+    .db-charts { display:grid; grid-template-columns:2fr 1fr; gap:14px; margin-bottom:20px; }
+    @media(max-width:992px){ .db-charts { grid-template-columns:1fr; } }
+    .db-chart-box {
+        background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg);
+        padding:18px 20px; backdrop-filter:blur(12px);
+    }
+    .db-chart-box .chart-hdr {
+        font-size:0.88rem; font-weight:600; color:var(--text-primary); margin-bottom:14px;
+        display:flex; align-items:center; gap:8px;
+    }
+    .chart-wrap { position:relative; height:200px; }
+
+    /* ===== Alert Banner ===== */
+    .db-alert {
+        background:linear-gradient(135deg, rgba(239,68,68,0.08), rgba(239,68,68,0.03));
+        border:1px solid rgba(239,68,68,0.2); border-radius:var(--radius-lg);
+        padding:14px 20px; margin-bottom:20px; display:flex; align-items:center; gap:14px;
+    }
+    .db-alert .alert-icon {
+        width:40px; height:40px; border-radius:10px; background:rgba(239,68,68,0.12);
+        display:flex; align-items:center; justify-content:center; color:#ef4444; font-size:1rem; flex-shrink:0;
+    }
+    .db-alert .alert-text { flex:1; }
+    .db-alert .alert-text h6 { font-size:0.85rem; color:#ef4444; margin:0 0 2px 0; font-weight:600; }
+    .db-alert .alert-text p { font-size:0.75rem; color:var(--text-muted); margin:0; }
+
+    /* ===== Quick Links ===== */
+    .db-links { display:grid; grid-template-columns:repeat(6,1fr); gap:10px; margin-bottom:20px; }
+    @media(max-width:992px){ .db-links { grid-template-columns:repeat(3,1fr); } }
+    @media(max-width:576px){ .db-links { grid-template-columns:repeat(2,1fr); } }
+    .db-link {
+        display:flex; flex-direction:column; align-items:center; gap:8px; padding:16px 8px;
+        background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-md);
+        text-decoration:none; transition:all .2s; text-align:center;
+    }
+    .db-link:hover { border-color:var(--accent); transform:translateY(-2px); box-shadow:var(--shadow-md); }
+    .db-link .db-link-icon {
+        width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:0.95rem;
+    }
+    .db-link .db-link-label { font-size:0.73rem; color:var(--text-secondary); font-weight:500; }
+
+    /* ===== Activity Timeline ===== */
+    .db-activity {
+        background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg);
+        backdrop-filter:blur(12px);
+    }
+    .db-activity .act-hdr {
+        padding:14px 20px; border-bottom:1px solid var(--border); font-weight:600; font-size:0.9rem;
+        display:flex; align-items:center; gap:8px; color:var(--text-primary);
+    }
+    .act-item {
+        display:flex; align-items:center; gap:12px; padding:11px 20px;
+        border-bottom:1px solid rgba(255,255,255,0.03); transition:background .15s;
+    }
+    .act-item:last-child { border-bottom:none; }
+    .act-item:hover { background:rgba(255,255,255,0.015); }
+    .act-item .act-dot {
+        width:8px; height:8px; border-radius:50%; flex-shrink:0;
+    }
+    .act-item .act-body { flex:1; min-width:0; }
+    .act-item .act-title { font-size:0.82rem; color:var(--text-primary); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .act-item .act-sub { font-size:0.7rem; color:var(--text-muted); }
+    .act-item .act-val { font-size:0.82rem; font-weight:600; white-space:nowrap; font-variant-numeric:tabular-nums; }
+
+    /* ===== Low Stock Section ===== */
+    .db-stock-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px; }
+    @media(max-width:768px){ .db-stock-grid { grid-template-columns:1fr; } }
+    .db-stock-box {
+        background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg);
+        backdrop-filter:blur(12px);
+    }
+    .db-stock-box .stk-hdr {
+        padding:12px 18px; border-bottom:1px solid var(--border); font-weight:600; font-size:0.85rem;
+        display:flex; align-items:center; gap:8px; color:var(--text-primary);
+    }
+    .stk-item {
+        display:flex; align-items:center; justify-content:space-between; padding:9px 18px;
+        border-bottom:1px solid rgba(255,255,255,0.03);
+    }
+    .stk-item:last-child { border-bottom:none; }
+    .stk-item .stk-name { font-size:0.82rem; color:var(--text-primary); font-weight:500; }
+    .stk-item .stk-info { font-size:0.72rem; color:var(--text-muted); }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Low Stock Alert -->
+{% if material_out %}
+<div class="db-alert animate-in">
+    <div class="alert-icon"><i class="fas fa-exclamation-triangle"></i></div>
+    <div class="alert-text">
+        <h6>هشدار: موجودی صفر!</h6>
+        <p>{% for m in material_out %}{{ m.name }}{% if not forloop.last %}، {% endif %}{% endfor %} — {{ material_out|length }} ماده اولیه ناموجود است</p>
+    </div>
+    <a href="{% url 'inventory_report' %}" style="color:#ef4444;font-size:0.8rem;font-weight:600;white-space:nowrap;">مشاهده گزارش <i class="fas fa-arrow-left ms-1"></i></a>
+</div>
+{% elif material_low %}
+<div class="db-alert animate-in" style="background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(245,158,11,0.03));border-color:rgba(245,158,11,0.2);">
+    <div class="alert-icon" style="background:rgba(245,158,11,0.12);color:#f59e0b;"><i class="fas fa-exclamation"></i></div>
+    <div class="alert-text">
+        <h6 style="color:#f59e0b;">هشدار: کمبود موجودی</h6>
+        <p>{% for m in material_low %}{{ m.name }}{% if not forloop.last %}، {% endif %}{% endfor %}</p>
+    </div>
+    <a href="{% url 'inventory_report' %}" style="color:#f59e0b;font-size:0.8rem;font-weight:600;white-space:nowrap;">مشاهده <i class="fas fa-arrow-left ms-1"></i></a>
+</div>
+{% endif %}
+
+<!-- Hero Stats -->
+<div class="db-hero">
+    <a href="{% url 'invoice_report' %}" class="db-card animate-in">
+        <div class="db-glow" style="background:var(--success);"></div>
+        <div class="db-icon" style="background:rgba(16,185,129,0.12);color:var(--success);"><i class="fas fa-shopping-cart"></i></div>
+        <div class="db-value" style="color:var(--success);">{{ monthly_sales|currency_format }}</div>
+        <div class="db-label">فروش این ماه</div>
+    </a>
+    <a href="{% url 'purchase_report' %}" class="db-card animate-in">
+        <div class="db-glow" style="background:var(--danger);"></div>
+        <div class="db-icon" style="background:rgba(239,68,68,0.12);color:var(--danger);"><i class="fas fa-truck"></i></div>
+        <div class="db-value" style="color:var(--danger);">{{ monthly_purchases|currency_format }}</div>
+        <div class="db-label">خرید این ماه</div>
+    </a>
+    <a href="{% url 'financial_summary' %}" class="db-card animate-in">
+        <div class="db-glow" style="background:var(--accent);"></div>
+        <div class="db-icon" style="background:rgba(99,102,241,0.12);color:var(--accent);"><i class="fas fa-coins"></i></div>
+        <div class="db-value" style="color:var(--accent);">{{ total_sales|currency_format }}</div>
+        <div class="db-label">کل فروش</div>
+    </a>
+    <a href="{% url 'invoice_list' %}" class="db-card animate-in">
+        <div class="db-glow" style="background:var(--warning);"></div>
+        <div class="db-icon" style="background:rgba(245,158,11,0.12);color:var(--warning);"><i class="fas fa-file-invoice"></i></div>
+        <div class="db-value" style="color:var(--warning);">{{ pending_amount|currency_format }}</div>
+        <div class="db-label">باقیمانده فاکتورها</div>
+    </a>
+</div>
+
+<!-- Secondary Stats -->
+<div class="db-hero">
+    <div class="db-card animate-in">
+        <div class="db-icon" style="background:rgba(6,182,212,0.12);color:var(--info);"><i class="fas fa-box"></i></div>
+        <div class="db-value">{{ product_count }}</div>
+        <div class="db-label">محصولات فعال</div>
+    </div>
+    <div class="db-card animate-in">
+        <div class="db-icon" style="background:rgba(245,158,11,0.12);color:var(--warning);"><i class="fas fa-cubes"></i></div>
+        <div class="db-value">{{ total_materials }}</div>
+        <div class="db-label">مواد اولیه</div>
+    </div>
+    <div class="db-card animate-in">
+        <div class="db-icon" style="background:rgba(139,92,246,0.12);color:#8b5cf6;"><i class="fas fa-industry"></i></div>
+        <div class="db-value">{{ completed_orders }}</div>
+        <div class="db-label">تولید تکمیل شده</div>
+    </div>
+    <div class="db-card animate-in">
+        <div class="db-icon" style="background:rgba(16,185,129,0.12);color:var(--success);"><i class="fas fa-users"></i></div>
+        <div class="db-value">{{ worker_count }}</div>
+        <div class="db-label">کارگران فعال</div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="db-charts">
+    <div class="db-chart-box animate-in">
+        <div class="chart-hdr"><i class="fas fa-chart-area" style="color:var(--accent);"></i> فروش و خرید ۶ ماه اخیر</div>
+        <div class="chart-wrap"><canvas id="salesChart"></canvas></div>
+    </div>
+    <div class="db-chart-box animate-in">
+        <div class="chart-hdr"><i class="fas fa-chart-pie" style="color:var(--info);"></i> وضعیت سفارشات</div>
+        <div class="chart-wrap"><canvas id="ordersChart"></canvas></div>
+    </div>
+</div>
+
+<!-- Quick Links -->
+<div class="db-links">
+    <a href="{% url 'product_list' %}" class="db-link animate-in">
+        <div class="db-link-icon" style="background:rgba(6,182,212,0.12);color:var(--info);"><i class="fas fa-box"></i></div>
+        <div class="db-link-label">محصولات</div>
+    </a>
+    <a href="{% url 'material_list' %}" class="db-link animate-in">
+        <div class="db-link-icon" style="background:rgba(245,158,11,0.12);color:var(--warning);"><i class="fas fa-cubes"></i></div>
+        <div class="db-link-label">مواد اولیه</div>
+    </a>
+    <a href="{% url 'invoice_list' %}" class="db-link animate-in">
+        <div class="db-link-icon" style="background:rgba(16,185,129,0.12);color:var(--success);"><i class="fas fa-file-invoice"></i></div>
+        <div class="db-link-label">فاکتورها</div>
+    </a>
+    <a href="{% url 'inventory_dashboard' %}" class="db-link animate-in">
+        <div class="db-link-icon" style="background:rgba(239,68,68,0.12);color:var(--danger);"><i class="fas fa-warehouse"></i></div>
+        <div class="db-link-label">انبار</div>
+    </a>
+    <a href="{% url 'order_list' %}" class="db-link animate-in">
+        <div class="db-link-icon" style="background:rgba(139,92,246,0.12);color:#8b5cf6;"><i class="fas fa-industry"></i></div>
+        <div class="db-link-label">تولید</div>
+    </a>
+    <a href="{% url 'report_dashboard' %}" class="db-link animate-in">
+        <div class="db-link-icon" style="background:rgba(99,102,241,0.12);color:var(--accent);"><i class="fas fa-chart-bar"></i></div>
+        <div class="db-link-label">گزارشات</div>
+    </a>
+    <a href="{% url 'worker_list' %}" class="db-link animate-in">
+        <div class="db-link-icon" style="background:rgba(236,72,153,0.12);color:#ec4899;"><i class="fas fa-users"></i></div>
+        <div class="db-link-label">کارگران</div>
+    </a>
+    <a href="{% url 'customer_list' %}" class="db-link animate-in">
+        <div class="db-link-icon" style="background:rgba(34,197,94,0.12);color:#22c55e;"><i class="fas fa-user-tie"></i></div>
+        <div class="db-link-label">مشتریان</div>
+    </a>
+    <a href="{% url 'purchase_list' %}" class="db-link animate-in">
+        <div class="db-link-icon" style="background:rgba(245,158,11,0.12);color:#f59e0b;"><i class="fas fa-shopping-cart"></i></div>
+        <div class="db-link-label">خریدها</div>
+    </a>
+    <a href="{% url 'daily_production_list' %}" class="db-link animate-in">
+        <div class="db-link-icon" style="background:rgba(6,182,212,0.12);color:#06b6d4;"><i class="fas fa-calendar-day"></i></div>
+        <div class="db-link-label">تولید روزانه</div>
+    </a>
+    <a href="{% url 'settings_dashboard' %}" class="db-link animate-in">
+        <div class="db-link-icon" style="background:rgba(148,163,184,0.12);color:var(--text-secondary);"><i class="fas fa-cog"></i></div>
+        <div class="db-link-label">تنظیمات</div>
+    </a>
+    <a href="{% url 'sms_dashboard' %}" class="db-link animate-in">
+        <div class="db-link-icon" style="background:rgba(34,197,94,0.12);color:#22c55e;"><i class="fas fa-sms"></i></div>
+        <div class="db-link-label">پیامک</div>
+    </a>
+</div>
+
+<!-- Activity + Low Stock -->
+<div class="row g-3 mb-0">
+    <!-- Recent Invoices -->
+    <div class="col-lg-7">
+        <div class="db-activity animate-in">
+            <div class="act-hdr"><i class="fas fa-file-invoice" style="color:var(--success);"></i> آخرین فاکتورها</div>
+            {% for inv in recent_invoices %}
+            <div class="act-item">
+                <div class="act-dot" style="background:{% if inv.status == 'paid' %}var(--success){% elif inv.status == 'partial' %}var(--warning){% else %}var(--text-muted){% endif %};"></div>
+                <div class="act-body">
+                    <div class="act-title">{{ inv.customer.name }}</div>
+                    <div class="act-sub">{{ inv.invoice_number }} — {{ inv.issue_date|to_jalali }}</div>
+                </div>
+                <div class="act-val" style="color:var(--success);">{{ inv.total|currency_format }}</div>
+            </div>
+            {% empty %}
+            <div class="act-item">
+                <div class="act-dot" style="background:var(--text-muted);"></div>
+                <div class="act-body"><div class="act-title" style="color:var(--text-muted);">فاکتوری ثبت نشده</div></div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Low Stock -->
+    <div class="col-lg-5">
+        <div class="db-stock-box animate-in">
+            <div class="stk-hdr"><i class="fas fa-exclamation-triangle" style="color:var(--danger);"></i> موجودی بحرانی <span style="font-size:0.72rem;color:var(--text-muted);font-weight:400;margin-right:auto;">{{ material_low|length }} مورد</span></div>
+            {% for m in material_low|slice:":8" %}
+            <div class="stk-item">
+                <div>
+                    <div class="stk-name">{{ m.name }}</div>
+                    <div class="stk-info">{{ m.code }} — حداقل: {{ m.min_stock }}</div>
+                </div>
+                <div>
+                    {% if m.stock_status == 'out_of_stock' %}
+                    <span style="color:#ef4444;font-weight:700;font-size:0.85rem;">{{ m.current_stock }}</span>
+                    {% else %}
+                    <span style="color:#f59e0b;font-weight:700;font-size:0.85rem;">{{ m.current_stock }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="stk-item">
+                <div class="stk-name" style="color:var(--text-muted);">موجودی تمام مواد کافی است</div>
+            </div>
+            {% endfor %}
+            {% if material_low|length > 8 %}
+            <a href="{% url 'inventory_report' %}" style="display:block;text-align:center;padding:10px;font-size:0.78rem;color:var(--accent);border-top:1px solid var(--border);">مشاهده همه <i class="fas fa-arrow-left ms-1"></i></a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Sales Chart
+    var salesCtx = document.getElementById('salesChart');
+    if (salesCtx) {
+        new Chart(salesCtx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: {{ chart_months|safe }},
+                datasets: [{
+                    label: 'فروش',
+                    data: {{ chart_sales|safe }},
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16,185,129,0.08)',
+                    fill: true, tension: 0.4, borderWidth: 2,
+                    pointRadius: 3, pointBackgroundColor: '#10b981',
+                }, {
+                    label: 'خرید',
+                    data: {{ chart_purchases|safe }},
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239,68,68,0.08)',
+                    fill: true, tension: 0.4, borderWidth: 2,
+                    pointRadius: 3, pointBackgroundColor: '#ef4444',
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#b0bec5', font: { family: 'Vazirmatn', size: 11 } } },
+                    tooltip: {
+                        backgroundColor: '#1e2a3a', titleColor: '#e8edf5', bodyColor: '#b0bec5',
+                        borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, padding: 10,
+                        titleFont: { family: 'Vazirmatn' }, bodyFont: { family: 'Vazirmatn' },
+                        callbacks: {
+                            label: function(ctx) {
+                                return ctx.dataset.label + ': ' + new Intl.NumberFormat('fa-IR').format(Math.round(ctx.raw)) + ' ریال';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { ticks: { color: '#6b7280', font: { family: 'Vazirmatn', size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+                    y: { ticks: { color: '#6b7280', font: { family: 'Vazirmatn', size: 10 }, callback: function(v) { return new Intl.NumberFormat('fa-IR').format(v/1000000) + 'M'; } }, grid: { color: 'rgba(255,255,255,0.04)' } }
+                }
+            }
+        });
+    }
+
+    // Orders Doughnut
+    var ordersCtx = document.getElementById('ordersChart');
+    if (ordersCtx) {
+        new Chart(ordersCtx.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['در انتظار', 'در حال تولید', 'تکمیل شده'],
+                datasets: [{
+                    data: [{{ pending_orders }}, {{ in_progress_orders }}, {{ completed_orders }}],
+                    backgroundColor: ['#f59e0b', '#06b6d4', '#10b981'],
+                    borderColor: '#1e2a3a', borderWidth: 3,
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, cutout: '65%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: '#b0bec5', font: { family: 'Vazirmatn', size: 11 }, padding: 12, usePointStyle: true, pointStyleWidth: 8 }
+                    },
+                    tooltip: {
+                        backgroundColor: '#1e2a3a', titleColor: '#e8edf5', bodyColor: '#b0bec5',
+                        titleFont: { family: 'Vazirmatn' }, bodyFont: { family: 'Vazirmatn' },
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

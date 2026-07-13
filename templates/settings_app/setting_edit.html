@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load jalali_filters %}
+
+{% block page_icon %}cog{% endblock %}
+{% block page_title %}ویرایش تنظیم{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="animate-in"><i class="fas fa-cog ms-2"></i> ویرایش تنظیم: {{ setting.key }}</h4>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card animate-in">
+            <div class="card-header">
+                <i class="fas fa-edit"></i> فرم ویرایش تنظیم
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">کلید</label>
+                        <input type="text" class="form-control" value="{{ setting.key }}" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">مقدار</label>
+                        <input type="text" name="value" class="form-control" value="{{ setting.value }}">
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save ms-2"></i> ذخیره
+                        </button>
+                        <a href="{% url 'settings_dashboard' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-right ms-2"></i> بازگشت
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

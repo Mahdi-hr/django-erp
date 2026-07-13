@@ -1,0 +1,96 @@
+{% load static %}
+{% load jalali_filters %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>لیست قیمت محصولات - {{ company.name }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @page { size: A4; margin: 12mm; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Vazirmatn', sans-serif; background: #fff; color: #333; direction: rtl; font-size: 11px; }
+        .container { max-width: 210mm; margin: 0 auto; padding: 10mm; }
+
+        .header { text-align: center; border-bottom: 3px solid #c0392b; padding-bottom: 12px; margin-bottom: 14px; }
+        .logo-box { width: 60px; height: 60px; border-radius: 12px; background: #c0392b; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-size: 1.5rem; margin-bottom: 8px; }
+        .company-name { font-size: 1.4rem; font-weight: 700; color: #c0392b; }
+        .report-title { font-size: 1rem; color: #666; margin: 3px 0; }
+        .meta { font-size: 0.7rem; color: #999; }
+
+        .info-bar { display: flex; justify-content: center; gap: 14px; margin-bottom: 14px; }
+        .info-chip { background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 6px 14px; font-size: 0.75rem; color: #666; }
+        .info-chip strong { color: #c0392b; }
+
+        .table-wrap { border: 1px solid #fecaca; border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
+        table { width: 100%; border-collapse: collapse; }
+        thead th { background: #c0392b; color: #fff; padding: 10px 8px; font-size: 0.8rem; font-weight: 600; text-align: center; }
+        tbody td { padding: 8px; border-bottom: 1px solid #fef2f2; font-size: 0.8rem; text-align: center; }
+        tbody tr:nth-child(even) { background: #fef9f8; }
+        .col-name { text-align: right; font-weight: 600; color: #333; }
+        .col-price { font-weight: 700; color: #c0392b; font-size: 0.9rem; direction: ltr; }
+
+        .footer { border-top: 2px solid #c0392b; padding-top: 10px; text-align: center; }
+        .footer-text { font-size: 0.65rem; color: #999; }
+        .stamp { display: inline-block; border: 2px solid #fecaca; border-radius: 50%; width: 70px; height: 70px; line-height: 70px; font-size: 0.6rem; color: #ccc; margin-top: 8px; }
+
+        @media print { .no-print { display: none !important; } body { background: #fff; } .container { padding: 0; } }
+        @media screen { .container { box-shadow: 0 0 30px rgba(0,0,0,0.06); margin: 20px auto; border-radius: 6px; } }
+    </style>
+</head>
+<body>
+    <div class="no-print" style="text-align:center;padding:10px;background:#fef9f8;border-bottom:1px solid #fecaca;">
+        <button onclick="window.print()" style="background:#c0392b;color:#fff;border:none;padding:8px 28px;border-radius:6px;font-family:inherit;font-size:0.85rem;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+            <i class="fas fa-print"></i> چاپ
+        </button>
+        <a href="{% url 'product_list' %}" style="background:#fff;color:#c0392b;border:1px solid #fecaca;padding:8px 20px;border-radius:6px;font-family:inherit;font-size:0.85rem;display:inline-flex;align-items:center;gap:6px;margin-right:6px;text-decoration:none;">
+            <i class="fas fa-arrow-right"></i> بازگشت
+        </a>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <div class="logo-box">
+                {% if company.logo %}<img src="/media/logos/{{ company.logo }}" style="width:42px;height:42px;object-fit:contain;">{% else %}<i class="fas fa-industry"></i>{% endif %}
+            </div>
+            <div class="company-name">{{ company.name }}</div>
+            <div class="report-title">لیست قیمت محصولات</div>
+            <div class="meta">تلفن: {{ company.phone }}</div>
+        </div>
+
+        <div class="info-bar">
+            <div class="info-chip">تاریخ چاپ: <strong>{% now "Y/m/d" %}</strong></div>
+            <div class="info-chip">تعداد محصولات: <strong>{{ products|length }}</strong></div>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:40px;">ردیف</th>
+                        <th style="width:70px;">کد</th>
+                        <th>نام محصول</th>
+                        <th style="width:140px;">قیمت فروش (ریال)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in products %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td style="font-weight:600;">{{ p.code }}</td>
+                        <td class="col-name">{{ p.name }}</td>
+                        <td class="col-price">{{ p.sale_price|currency_format }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="footer">
+            <div class="footer-text">{{ company.name }} — {{ company.address }} — {{ company.phone }}</div>
+            <div class="stamp">مهر و امضا</div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% load jalali_filters %}
+
+{% block title %}تراکنش‌های انبار{% endblock %}
+{% block page_icon %}warehouse{% endblock %}
+{% block page_title %}تراکنش‌های انبار{% endblock %}
+
+{% block content %}
+<!-- Filter -->
+<div class="card mb-4 animate-in">
+    <div class="card-header">
+        <i class="fas fa-filter" style="color:var(--accent);"></i> فیلتر تراکنش‌ها
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">ماده اولیه</label>
+                <select name="material" class="form-select">
+                    <option value="">همه مواد</option>
+                    {% for m in materials %}
+                    <option value="{{ m.pk }}" {% if selected_material == m.pk|stringformat:"d" %}selected{% endif %}>{{ m.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">نوع تراکنش</label>
+                <select name="type" class="form-select">
+                    <option value="">همه انواع</option>
+                    <option value="in" {% if selected_type == 'in' %}selected{% endif %}>ورود</option>
+                    <option value="out" {% if selected_type == 'out' %}selected{% endif %}>خروج</option>
+                    <option value="waste" {% if selected_type == 'waste' %}selected{% endif %}>ضایعات</option>
+                    <option value="return" {% if selected_type == 'return' %}selected{% endif %}>برگشت</option>
+                    <option value="adjust" {% if selected_type == 'adjust' %}selected{% endif %}>اصلاح</option>
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-outline-primary w-100">
+                    <i class="fas fa-filter ms-1"></i> اعمال فیلتر
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Transactions Table -->
+<div class="card animate-in">
+    <div class="card-header">
+        <i class="fas fa-exchange-alt"></i> لیست تراکنش‌ها
+        <span class="badge bg-info me-auto">{{ transactions|length }} مورد</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>ماده</th>
+                    <th>نوع</th>
+                    <th>مقدار</th>
+                    <th>قیمت واحد</th>
+                    <th>قیمت کل</th>
+                    <th>یادداشت</th>
+                    <th>تاریخ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in transactions %}
+                <tr>
+                    <td style="font-weight:500;">{{ t.material.name }}</td>
+                    <td>
+                        {% if t.type == 'in' %}
+                        <span class="badge bg-success"><i class="fas fa-arrow-down ms-1" style="font-size:0.6rem;"></i> ورود</span>
+                        {% elif t.type == 'out' %}
+                        <span class="badge bg-danger"><i class="fas fa-arrow-up ms-1" style="font-size:0.6rem;"></i> خروج</span>
+                        {% elif t.type == 'waste' %}
+                        <span class="badge bg-warning"><i class="fas fa-trash ms-1" style="font-size:0.6rem;"></i> ضایعات</span>
+                        {% elif t.type == 'return' %}
+                        <span class="badge bg-info"><i class="fas fa-undo ms-1" style="font-size:0.6rem;"></i> برگشت</span>
+                        {% else %}
+                        <span class="badge bg-secondary"><i class="fas fa-edit ms-1" style="font-size:0.6rem;"></i> اصلاح</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ t.quantity }}</td>
+                    <td>{{ t.unit_price|currency_format }}</td>
+                    <td style="font-weight:600;">{{ t.total_price|currency_format }}</td>
+                    <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ t.notes|truncatewords:10|default:"-" }}</td>
+                    <td style="font-size:0.82rem;color:var(--text-secondary);">{{ t.transaction_date|to_jalali }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="empty-state" style="padding:40px;">
+                        <i class="fas fa-exchange-alt d-block mb-2" style="font-size:2rem;"></i>
+                        تراکنشی یافت نشد
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
