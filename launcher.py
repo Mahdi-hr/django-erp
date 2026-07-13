@@ -39,7 +39,14 @@ class ERPLauncher:
         y = (self.root.winfo_screenheight() // 2) - 275
         self.root.geometry(f"700x550+{x}+{y}")
 
-        self.project_dir = Path(__file__).parent.absolute()
+        # Find project directory - works for both EXE and script
+        if getattr(sys, 'frozen', False):
+            # Running as PyInstaller EXE - use EXE's directory
+            self.project_dir = Path(sys.executable).parent.absolute()
+        else:
+            # Running as Python script
+            self.project_dir = Path(__file__).parent.absolute()
+
         self.server_process = None
         self.is_running = False
 

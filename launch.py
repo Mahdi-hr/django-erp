@@ -11,7 +11,12 @@ from pathlib import Path
 APP_NAME = "ERP تولید — کارخانه تجهیزات فلزی"
 VERSION = "1.0.0"
 PORT = 8000
-PROJECT_DIR = Path(__file__).parent.absolute()
+
+# Find project directory - works for both EXE and script
+if getattr(sys, 'frozen', False):
+    PROJECT_DIR = Path(sys.executable).parent.absolute()
+else:
+    PROJECT_DIR = Path(__file__).parent.absolute()
 
 
 class C:
