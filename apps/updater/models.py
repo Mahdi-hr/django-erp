@@ -115,65 +115,58 @@ class VersionManager:
 
     @classmethod
     def check_remote_updates(cls):
-        """بررسی آپدیت‌های موجود از GitHub"""
+        """بررسی آپدیت‌های موجود از GitHub Releases"""
         repo_url = cls.get_git_repo_url()
         if not repo_url:
             return {'available': False, 'error': 'آدرس GitHub تنظیم نشده'}
 
-        if not cls.check_git_available():
-            return {'available': False, 'error': 'Git نصب نیست'}
-
         try:
-            # Fetch latest from remote
-            result = subprocess.run(
-                ['git', 'fetch', 'origin'],
-                capture_output=True,
-                text=True,
-                timeout=60,
-                cwd=str(settings.BASE_DIR)
-            )
-            if result.returncode != 0:
-                return {'available': False, 'error': f'خطا در اتصال: {result.stderr}'}
+            import requests
+            # Extract owner/repo from URL
+            # https://github.com/owner/repo.git -> owner/repo
+            parts = repo_url.replace('https://github.com/', '').replace('.git', '').split('/')
+            if len(parts) != 2:
+                return {'available': False, 'error': 'آدرس GitHub نامعتبر'}
+            owner, repo = parts
 
-            # Compare local and remote
-            result = subprocess.run(
-                ['git', 'rev-parse', 'HEAD'],
-                capture_output=True,
-                text=True,
-                cwd=str(settings.BASE_DIR)
-            )
-            local_commit = result.stdout.strip()
+            # Get latest release from GitHub API
+            api_url = f'https://api.github.com/repos/{owner}/{repo}/releases/latest'
+            response = requests.get(api_url, timeout=15)
+            if response.status_code == 404:
+                return {'available': False, 'message': 'هنوز ریلیزی منتشر نشده'}
+            if response.status_code != 200:
+                return {'available': False, 'error': f'خطا: {response.status_code}'}
 
-            result = subprocess.run(
-                ['git', 'rev-parse', 'origin/main'],
-                capture_output=True,
-                text=True,
-                cwd=str(settings.BASE_DIR)
-            )
-            remote_commit = result.stdout.strip()
+            release = response.json()
+            remote_version = release.get('tag_name', '').lstrip('v')
+            current_version = cls.get_current_version()
 
-            if local_commit != remote_commit:
-                # Get commit messages
-                result = subprocess.run(
-                    ['git', 'log', 'HEAD..origin/main', '--oneline', '--no-merges'],
-                    capture_output=True,
-                    text=True,
-                    cwd=str(settings.BASE_DIR)
-                )
-                commits = result.stdout.strip().split('\n') if result.stdout.strip() else []
+            if remote_version != current_version:
+                # Find EXE asset
+                exe_asset = None
+                for asset in release.get('assets', []):
+                    if asset['name'].endswith('.exe'):
+                        exe_asset = {
+                            'name': asset['name'],
+                            'url': asset['browser_download_url'],
+                            'size': asset['size'],
+                        }
+                        break
 
                 return {
                     'available': True,
-                    'local_commit': local_commit[:8],
-                    'remote_commit': remote_commit[:8],
-                    'commits': commits,
-                    'commit_count': len(commits)
+                    'remote_version': remote_version,
+                    'current_version': current_version,
+                    'release_name': release.get('name', ''),
+                    'release_body': release.get('body', ''),
+                    'exe_asset': exe_asset,
+                    'release_url': release.get('html_url', ''),
                 }
             else:
-                return {'available': False, 'message': 'ورژن فعلی به‌روز است'}
+                return {'available': False, 'message': f'ورژن فعلی ({current_version}) به‌روز است'}
 
-        except subprocess.TimeoutExpired:
-            return {'available': False, 'error': 'اتصال به سرور زمان‌بر شد'}
+        except requests.exceptions.RequestException as e:
+            return {'available': False, 'error': f'خطا در اتصال: {str(e)}'}
         except Exception as e:
             return {'available': False, 'error': str(e)}
 
@@ -224,10 +217,8 @@ class VersionManager:
 
     @classmethod
     def perform_update(cls, user=None):
-        """اجرای آپدیت"""
-        repo_url = cls.get_git_repo_url()
-        if not repo_url:
-            raise Exception('آدرس GitHub تنظیم نشده')
+        """اجرای آپدیت از GitHub Release"""
+        import requests
 
         current_version = cls.get_current_version()
         log = UpdateLog.objects.create(
@@ -237,63 +228,60 @@ class VersionManager:
         )
 
         try:
-            # Step 1: Create backup
+            # Step 1: Check for latest release
             log.status = 'downloading'
             log.save()
 
+            repo_url = cls.get_git_repo_url()
+            parts = repo_url.replace('https://github.com/', '').replace('.git', '').split('/')
+            owner, repo = parts
+
+            api_url = f'https://api.github.com/repos/{owner}/{repo}/releases/latest'
+            response = requests.get(api_url, timeout=15)
+            release = response.json()
+            remote_version = release.get('tag_name', '').lstrip('v')
+
+            # Step 2: Create backup
             backup_path = cls.create_backup()
             log.backup_path = backup_path
 
-            # Step 2: Pull from GitHub
-            result = subprocess.run(
-                ['git', 'pull', 'origin', 'main'],
-                capture_output=True,
-                text=True,
-                timeout=120,
-                cwd=str(settings.BASE_DIR)
-            )
+            # Step 3: Download EXE from release
+            exe_asset = None
+            for asset in release.get('assets', []):
+                if asset['name'].endswith('.exe'):
+                    exe_asset = asset
+                    break
 
-            if result.returncode != 0:
-                raise Exception(f'خطا در دریافت آپدیت: {result.stderr}')
+            if exe_asset:
+                # Download the EXE
+                exe_url = exe_asset['browser_download_url']
+                exe_response = requests.get(exe_url, timeout=120)
+                exe_path = Path(settings.BASE_DIR) / exe_asset['name']
+                with open(exe_path, 'wb') as f:
+                    f.write(exe_response.content)
 
-            # Step 3: Update dependencies
+            # Step 4: Pull latest code (for Python files)
             log.status = 'updating'
             log.save()
 
+            if cls.check_git_available():
+                subprocess.run(['git', 'pull', 'origin', 'main'],
+                             capture_output=True, timeout=120, cwd=str(settings.BASE_DIR))
+
+            # Step 5: Update dependencies
             pip_path = sys.executable
-            result = subprocess.run(
-                [pip_path, '-m', 'pip', 'install', '-r', 'requirements.txt'],
-                capture_output=True,
-                text=True,
-                timeout=300,
-                cwd=str(settings.BASE_DIR)
-            )
+            subprocess.run([pip_path, '-m', 'pip', 'install', '-r', 'requirements.txt'],
+                         capture_output=True, timeout=300, cwd=str(settings.BASE_DIR))
 
-            if result.returncode != 0:
-                raise Exception(f'خطا در نصب وابستگی‌ها: {result.stderr}')
+            # Step 6: Run migrations
+            subprocess.run([pip_path, 'manage.py', 'migrate', '--noinput'],
+                         capture_output=True, timeout=120, cwd=str(settings.BASE_DIR))
 
-            # Step 4: Run migrations
-            result = subprocess.run(
-                [pip_path, 'manage.py', 'migrate', '--noinput'],
-                capture_output=True,
-                text=True,
-                timeout=120,
-                cwd=str(settings.BASE_DIR)
-            )
+            # Step 7: Collect static
+            subprocess.run([pip_path, 'manage.py', 'collectstatic', '--noinput'],
+                         capture_output=True, timeout=120, cwd=str(settings.BASE_DIR))
 
-            if result.returncode != 0:
-                raise Exception(f'خطا در مایگریشن: {result.stderr}')
-
-            # Step 5: Collect static files
-            result = subprocess.run(
-                [pip_path, 'manage.py', 'collectstatic', '--noinput'],
-                capture_output=True,
-                text=True,
-                timeout=120,
-                cwd=str(settings.BASE_DIR)
-            )
-
-            # Step 6: Update version file
+            # Step 8: Update version
             new_version = cls.get_current_version()
             log.version_to = new_version
             log.complete_success()
