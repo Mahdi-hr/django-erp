@@ -73,8 +73,9 @@ BACKUP_SECTIONS: Dict[str, dict] = {
         'label': 'پیامک‌ها',
         'icon': 'fas fa-sms',
         'models': [
-            ('sms', 'SmsTemplate'),
-            ('sms', 'SmsMessage'),
+            ('sms', 'SMSTemplate'),
+            ('sms', 'SMSMessage'),
+            ('sms', 'SMSProviderConfig'),
         ],
     },
     'settings': {

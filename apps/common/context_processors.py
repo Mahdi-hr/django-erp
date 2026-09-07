@@ -34,7 +34,7 @@ def site_context(request):
     logo_val = Setting.get_value('company_logo', 'fa-industry')
     company_logo_path = '' if logo_val.startswith('fa-') or not logo_val else logo_val
 
-    return {
+    context = {
         'company_name': Setting.get_value('company_name', 'سیستم ERP'),
         'company_info': {
             'name': Setting.get_value('company_name', 'شرکت'),
@@ -47,3 +47,11 @@ def site_context(request):
         'theme_css': theme_css,
         'theme_data': theme,
     }
+
+    if request.user.is_authenticated:
+        from apps.common.models import Notification
+        notifications = Notification.objects.filter(user=request.user, is_read=False)[:10]
+        context['unread_notifications'] = notifications
+        context['unread_count'] = notifications.count()
+
+    return context

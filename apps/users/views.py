@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -28,10 +28,8 @@ def login_view(request):
     return render(request, 'registration/login.html', {'form': form})
 
 
-@login_required
 def logout_view(request):
     logout(request)
-    messages.success(request, 'با موفقیت خارج شدید')
     return redirect('login')
 
 
@@ -56,7 +54,7 @@ def user_create(request):
 
 @login_required
 def user_edit(request, pk):
-    user = User.objects.get(pk=pk)
+    user = get_object_or_404(User, pk=pk)
     if request.method == 'POST':
         form = UserForm(request.POST, instance=user)
         if form.is_valid():
@@ -70,7 +68,7 @@ def user_edit(request, pk):
 
 @login_required
 def user_delete(request, pk):
-    user = User.objects.get(pk=pk)
+    user = get_object_or_404(User, pk=pk)
     if request.method == 'POST':
         user.delete()
         messages.success(request, 'کاربر با موفقیت حذف شد')

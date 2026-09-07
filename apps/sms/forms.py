@@ -16,44 +16,29 @@ class SMSTemplateForm(forms.ModelForm):
 
 
 class SendSMSForm(forms.Form):
-    phone = forms.CharField(
-        label='شماره تلفن',
-        max_length=15,
-        widget=forms.TextInput(attrs={'class': 'form-control'}),
-    )
-    message = forms.CharField(
-        label='متن پیامک',
-        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
-    )
-    template = forms.ModelChoiceField(
-        label='قالب',
-        queryset=SMSTemplate.objects.filter(is_active=True),
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-select'}),
-    )
-
-
-class BulkSMSForm(forms.Form):
-    message = forms.CharField(
-        label='متن پیامک',
-        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
-    )
-    template = forms.ModelChoiceField(
-        label='قالب',
-        queryset=SMSTemplate.objects.filter(is_active=True),
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-select'}),
-    )
     customers = forms.ModelMultipleChoiceField(
         label='مشتریان',
         queryset=None,
+        required=False,
         widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
+    )
+    template = forms.ModelChoiceField(
+        label='قالب',
+        queryset=SMSTemplate.objects.filter(is_active=True),
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
+    message = forms.CharField(
+        label='متن پیامک',
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'dir': 'rtl'}),
     )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         from apps.customers.models import Customer
-        self.fields['customers'].queryset = Customer.objects.filter(is_active=True)
+        self.fields['customers'].queryset = Customer.objects.filter(
+            is_active=True
+        ).order_by('name')
 
 
 class SMSProviderConfigForm(forms.ModelForm):

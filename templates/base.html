@@ -4,29 +4,31 @@
 <html lang="fa" dir="rtl" style="color-scheme: dark;">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <meta name="color-scheme" content="dark">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <meta name="theme-color" content="#1e2a3a">
     <title>{% block title %}ERP{% endblock %} | {{ company_name|default:"کارخانه" }}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=15">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=20">
     <link rel="stylesheet" href="{% static 'css/forms.css' %}?v=13">
     <link rel="stylesheet" href="{% static 'css/persian-datepicker.css' %}">
     {% if theme_css %}
     <style id="themeOverride">
         :root { {{ theme_css|safe }} }
-        .card { background: var(--bg-card) !important; border-color: var(--border) !important; }
-        .card-header { background: transparent !important; border-color: var(--border) !important; }
-        .card-body { background: transparent !important; }
+        .erp-card { background: var(--bg-card) !important; border-color: var(--border) !important; }
+        .erp-card .card-header { background: transparent !important; border-color: var(--border) !important; }
+        .erp-card .card-body { background: transparent !important; }
         .table tbody tr { background: var(--bg-table-row) !important; }
         .table tbody tr:last-child { border-bottom: none; }
         .table tbody tr:hover { background: var(--bg-table-row-hover) !important; }
         .table tbody td { color: #e8dcc8 !important; }
         .table thead th { background: var(--bg-table-header) !important; color: var(--text-secondary) !important; }
         .form-control, .form-select { background: var(--bg-input) !important; color: var(--text-primary) !important; border-color: var(--border) !important; }
-        .sidebar { background: var(--bg-sidebar) !important; }
-        .header { background: var(--bg-header) !important; }
+        .erp-sidebar { background: var(--bg-sidebar) !important; }
+        .erp-header { background: var(--bg-header) !important; }
         .settings-section { background: var(--bg-card) !important; border-color: var(--border) !important; }
         .stat-card { background: var(--bg-card) !important; border-color: var(--border) !important; }
         .action-card { background: var(--bg-card) !important; border-color: var(--border) !important; }
@@ -38,87 +40,177 @@
         .btn-primary { background: var(--accent) !important; }
         .btn-outline-primary { color: var(--accent) !important; border-color: var(--accent) !important; }
         .btn-outline-primary:hover { background: var(--accent) !important; }
-        .nav-link.active { background: rgba(99,102,241,0.15) !important; color: var(--accent-light) !important; }
-        .nav-link.active::after { background: var(--accent) !important; }
+        .erp-nav .nav-link.active { background: rgba(99,102,241,0.15) !important; color: var(--accent-light) !important; }
+        .erp-nav .nav-link.active::after { background: var(--accent) !important; }
         .pagination .page-item.active .page-link { background: var(--accent) !important; }
         .alert-success { background: rgba(16,185,129,0.1) !important; color: var(--success) !important; border-color: var(--success) !important; }
         .alert-danger { background: rgba(239,68,68,0.1) !important; color: var(--danger) !important; border-color: var(--danger) !important; }
         .alert-warning { background: rgba(245,158,11,0.1) !important; color: var(--warning) !important; border-color: var(--warning) !important; }
         .alert-info { background: rgba(6,182,212,0.1) !important; color: var(--info) !important; border-color: var(--info) !important; }
     </style>
-    </style>
     {% endif %}
     {% block extra_css %}{% endblock %}
 </head>
 <body>
 {% if user.is_authenticated %}
-    <div id="sidebarOverlay" class="sidebar-overlay"></div>
 
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
+    <!-- Sidebar Overlay (Mobile) -->
+    <div id="sidebarOverlay" class="erp-sidebar-overlay"></div>
+
+    <!-- Sidebar -->
+    <aside class="erp-sidebar" id="sidebar">
+        <div class="erp-sidebar-header">
             {% if company_logo_path %}
-            <div class="logo-icon" style="background:transparent;padding:0;"><img src="/media/logos/{{ company_logo_path }}" alt="لوگو" style="width:40px;height:40px;object-fit:contain;border-radius:10px;"></div>
+            <div class="erp-logo"><img src="/media/logos/{{ company_logo_path }}" alt="لوگو"></div>
             {% else %}
-            <div class="logo-icon"><i class="fas fa-industry"></i></div>
+            <div class="erp-logo"><i class="fas fa-industry"></i></div>
             {% endif %}
-            <div>
-                <span class="brand-text">ERP تولید</span>
-                <small class="brand-sub">{{ company_name|default:"کارخانه" }}</small>
+            <div class="erp-brand">
+                <span class="erp-brand-title">ERP تولید</span>
+                <small class="erp-brand-sub">{{ company_name|default:"کارخانه" }}</small>
             </div>
         </div>
-        <nav class="nav">
-            <div class="nav-label">داشبورد</div>
-            <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"><i class="fas fa-chart-pie"></i> داشبورد</a>
 
-            <div class="nav-label">تولید</div>
-            <a href="{% url 'daily_production_list' %}" class="nav-link {% if 'daily' in request.path %}active{% endif %}"><i class="fas fa-calendar-day"></i> تولید روزانه</a>
-            <a href="{% url 'worker_list' %}" class="nav-link {% if 'worker' in request.path %}active{% endif %}"><i class="fas fa-hard-hat"></i> کارگران</a>
-
-            <div class="nav-label">انبار</div>
-            <a href="{% url 'material_list' %}" class="nav-link {% if 'material' in request.path %}active{% endif %}"><i class="fas fa-cubes"></i> مواد اولیه</a>
-            <a href="{% url 'product_list' %}" class="nav-link {% if 'product' in request.path %}active{% endif %}"><i class="fas fa-box"></i> محصولات</a>
-            <a href="{% url 'inventory_dashboard' %}" class="nav-link {% if 'inventory' in request.path %}active{% endif %}"><i class="fas fa-warehouse"></i> انبار</a>
-
-            <div class="nav-label">فروش</div>
-            <a href="{% url 'customer_list' %}" class="nav-link {% if 'customer' in request.path %}active{% endif %}"><i class="fas fa-users"></i> مشتریان</a>
-            <a href="{% url 'invoice_list' %}" class="nav-link {% if 'invoice' in request.path %}active{% endif %}"><i class="fas fa-file-invoice"></i> فاکتورها</a>
-
-            <div class="nav-label">ارتباطات</div>
-            <a href="{% url 'sms_dashboard' %}" class="nav-link {% if 'sms' in request.path %}active{% endif %}"><i class="fas fa-sms"></i> پیامک <span class="badge-dot"></span></a>
-
-            <div class="nav-label">گزارشات</div>
-            <a href="{% url 'report_dashboard' %}" class="nav-link {% if 'report' in request.path %}active{% endif %}"><i class="fas fa-chart-bar"></i> گزارشات</a>
-
-            <div class="nav-label">سیستم</div>
-            <a href="{% url 'settings_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'settings_dashboard' or request.resolver_match.url_name == 'theme_customizer' or request.resolver_match.url_name == 'setting_edit' or request.resolver_match.url_name == 'fixed_cost_create' or request.resolver_match.url_name == 'fixed_cost_edit' or request.resolver_match.url_name == 'fixed_cost_delete' or request.resolver_match.url_name == 'backup_dashboard' or request.resolver_match.url_name == 'backup_full_export' or request.resolver_match.url_name == 'backup_partial_export' or request.resolver_match.url_name == 'backup_restore' or request.resolver_match.url_name == 'backup_download' or request.resolver_match.url_name == 'backup_delete' or request.resolver_match.url_name == 'backup_metadata' or request.resolver_match.url_name == 'user_list' or request.resolver_match.url_name == 'user_create' or request.resolver_match.url_name == 'user_edit' or request.resolver_match.url_name == 'user_delete' %}active{% endif %}"><i class="fas fa-cog"></i> تنظیمات و مدیریت</a>
-            <a href="{% url 'updater:dashboard' %}" class="nav-link {% if request.resolver_match.app_name == 'updater' %}active{% endif %}"><i class="fas fa-sync-alt"></i> آپدیت سیستم</a>
-        </nav>
-        <div class="sidebar-footer">
-            <div class="avatar">{{ user.first_name|default:user.username|slice:":1"|upper }}</div>
-            <div class="user-info">
-                <div class="name">{{ user.get_full_name|default:user.username }}</div>
-                <div class="role">{{ user.get_role_display|default:"کاربر" }}</div>
+        <nav class="erp-nav">
+            <div class="erp-nav-section">
+                <div class="erp-nav-label">داشبورد</div>
+                <a href="{% url 'dashboard' %}" class="erp-nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                    <i class="fas fa-chart-pie"></i><span>داشبورد</span>
+                </a>
             </div>
-            <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-danger" data-confirm="آیا از خروج اطمینان دارید؟"><i class="fas fa-sign-out-alt"></i></a>
+
+            <div class="erp-nav-section">
+                <div class="erp-nav-label">تولید</div>
+                <a href="{% url 'daily_production_list' %}" class="erp-nav-link {% if request.resolver_match.url_name == 'daily_production_list' or request.resolver_match.url_name == 'daily_production_create' or request.resolver_match.url_name == 'daily_production_edit' or request.resolver_match.url_name == 'daily_production_delete' %}active{% endif %}">
+                    <i class="fas fa-calendar-day"></i><span>تولید روزانه</span>
+                </a>
+                <a href="{% url 'order_list' %}" class="erp-nav-link {% if request.resolver_match.url_name == 'order_list' or request.resolver_match.url_name == 'order_create' or request.resolver_match.url_name == 'order_detail' or request.resolver_match.url_name == 'order_start' or request.resolver_match.url_name == 'order_complete' or request.resolver_match.url_name == 'order_cancel' %}active{% endif %}">
+                    <i class="fas fa-clipboard-list"></i><span>سفارشات تولید</span>
+                </a>
+                <a href="{% url 'worker_list' %}" class="erp-nav-link {% if request.resolver_match.url_name == 'worker_list' or request.resolver_match.url_name == 'worker_create' or request.resolver_match.url_name == 'worker_detail' or request.resolver_match.url_name == 'worker_edit' or request.resolver_match.url_name == 'worker_delete' %}active{% endif %}">
+                    <i class="fas fa-hard-hat"></i><span>کارگران</span>
+                </a>
+            </div>
+
+            <div class="erp-nav-section">
+                <div class="erp-nav-label">انبار و مواد</div>
+                <a href="{% url 'material_list' %}" class="erp-nav-link {% if request.resolver_match.url_name == 'material_list' or request.resolver_match.url_name == 'material_create' or request.resolver_match.url_name == 'material_edit' or request.resolver_match.url_name == 'material_delete' or request.resolver_match.url_name == 'material_detail' or request.resolver_match.url_name == 'material_export_excel' or request.resolver_match.url_name == 'material_print' or request.resolver_match.url_name == 'category_list' or request.resolver_match.url_name == 'category_create' or request.resolver_match.url_name == 'category_edit' or request.resolver_match.url_name == 'category_delete' %}active{% endif %}">
+                    <i class="fas fa-cubes"></i><span>مواد اولیه</span>
+                </a>
+                <a href="{% url 'product_list' %}" class="erp-nav-link {% if request.resolver_match.url_name == 'product_list' or request.resolver_match.url_name == 'product_create' or request.resolver_match.url_name == 'product_detail' or request.resolver_match.url_name == 'product_edit' or request.resolver_match.url_name == 'product_delete' or request.resolver_match.url_name == 'recalculate_all_costs' or request.resolver_match.url_name == 'product_export_employer_excel' or request.resolver_match.url_name == 'product_export_customer_excel' or request.resolver_match.url_name == 'product_print_employer' or request.resolver_match.url_name == 'product_print_customer' %}active{% endif %}">
+                    <i class="fas fa-box"></i><span>محصولات</span>
+                </a>
+                <a href="{% url 'inventory_dashboard' %}" class="erp-nav-link {% if request.resolver_match.url_name == 'inventory_dashboard' or request.resolver_match.url_name == 'purchase_list' or request.resolver_match.url_name == 'purchase_create' or request.resolver_match.url_name == 'purchase_delete' or request.resolver_match.url_name == 'waste_list' or request.resolver_match.url_name == 'waste_create' or request.resolver_match.url_name == 'waste_delete' or request.resolver_match.url_name == 'return_list' or request.resolver_match.url_name == 'return_create' or request.resolver_match.url_name == 'return_delete' or request.resolver_match.url_name == 'transaction_list' or request.resolver_match.url_name == 'product_inventory_list' or request.resolver_match.url_name == 'product_inventory_detail' or request.resolver_match.url_name == 'product_purchase_list' or request.resolver_match.url_name == 'product_purchase_create' or request.resolver_match.url_name == 'product_purchase_delete' %}active{% endif %}">
+                    <i class="fas fa-warehouse"></i><span>انبار</span>
+                </a>
+            </div>
+
+            <div class="erp-nav-section">
+                <div class="erp-nav-label">فروش و مشتری</div>
+                <a href="{% url 'customer_list' %}" class="erp-nav-link {% if request.resolver_match.url_name == 'customer_list' or request.resolver_match.url_name == 'customer_create' or request.resolver_match.url_name == 'customer_detail' or request.resolver_match.url_name == 'customer_edit' or request.resolver_match.url_name == 'customer_delete' %}active{% endif %}">
+                    <i class="fas fa-users"></i><span>مشتریان</span>
+                </a>
+                <a href="{% url 'invoice_list' %}" class="erp-nav-link {% if request.resolver_match.url_name == 'invoice_list' or request.resolver_match.url_name == 'invoice_create' or request.resolver_match.url_name == 'invoice_detail' or request.resolver_match.url_name == 'invoice_edit' or request.resolver_match.url_name == 'invoice_delete' or request.resolver_match.url_name == 'invoice_register_payment' or request.resolver_match.url_name == 'invoice_print_dark' or request.resolver_match.url_name == 'invoice_print_light' %}active{% endif %}">
+                    <i class="fas fa-file-invoice"></i><span>فاکتورها</span>
+                </a>
+            </div>
+
+            <div class="erp-nav-section">
+                <div class="erp-nav-label">ارتباطات</div>
+                <a href="{% url 'sms_dashboard' %}" class="erp-nav-link {% if request.resolver_match.url_name == 'sms_dashboard' %}active{% endif %}">
+                    <i class="fas fa-sms"></i><span>پیامک</span>
+                    <span class="erp-badge-dot"></span>
+                </a>
+            </div>
+
+            <div class="erp-nav-section">
+                <div class="erp-nav-label">گزارشات</div>
+                <a href="{% url 'report_dashboard' %}" class="erp-nav-link {% if 'report' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="fas fa-chart-bar"></i><span>گزارشات</span>
+                </a>
+            </div>
+
+            <div class="erp-nav-section">
+                <div class="erp-nav-label">سیستم</div>
+                <a href="{% url 'settings_dashboard' %}" class="erp-nav-link {% if request.resolver_match.url_name == 'settings_dashboard' or request.resolver_match.url_name == 'backup_dashboard' or request.resolver_match.url_name == 'user_list' or request.resolver_match.url_name == 'user_create' or request.resolver_match.url_name == 'user_edit' or request.resolver_match.url_name == 'user_delete' %}active{% endif %}">
+                    <i class="fas fa-cog"></i><span>تنظیمات</span>
+                </a>
+                <a href="{% url 'updater_dashboard' %}" class="erp-nav-link {% if request.resolver_match.url_name == 'updater_dashboard' %}active{% endif %}">
+                    <i class="fas fa-sync-alt"></i><span>آپدیت سیستم</span>
+                </a>
+            </div>
+        </nav>
+
+        <div class="erp-sidebar-footer">
+            <div class="erp-avatar">{{ user.first_name|default:user.username|slice:":1"|upper }}</div>
+            <div class="erp-user-info">
+                <div class="erp-user-name">{{ user.get_full_name|default:user.username }}</div>
+                <div class="erp-user-role">{{ user.get_role_display|default:"کاربر" }}</div>
+            </div>
+            <a href="{% url 'logout' %}" class="erp-btn-icon-danger" data-confirm="آیا از خروج اطمینان دارید؟" title="خروج">
+                <i class="fas fa-sign-out-alt"></i>
+            </a>
         </div>
     </aside>
 
-    <div class="main-content">
-        <header class="header">
-            <div class="d-flex align-items-center gap-2">
-                <button class="btn-icon sidebar-toggle" id="sidebarToggle"><i class="fas fa-bars"></i></button>
-                <div class="page-title"><i class="fas fa-{% block page_icon %}home{% endblock %}"></i> {% block page_title %}صفحه اصلی{% endblock %}</div>
+    <!-- Main Content -->
+    <div class="erp-main">
+        <!-- Header -->
+        <header class="erp-header">
+            <div class="erp-header-right">
+                <button class="erp-sidebar-toggle" id="sidebarToggle" aria-label="منو">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 class="erp-page-title">
+                    <i class="fas fa-{% block page_icon %}home{% endblock %}"></i>
+                    {% block page_title %}صفحه اصلی{% endblock %}
+                </h1>
             </div>
-            <div class="header-actions">
-                <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-danger" data-confirm="آیا از خروج اطمینان دارید؟"><i class="fas fa-sign-out-alt ms-1"></i> خروج</a>
+            <div class="erp-header-left">
+                {% if user.is_authenticated %}
+                <div class="dropdown">
+                    <button class="erp-btn-icon erp-btn-notif" data-bs-toggle="dropdown" title="اعلانات">
+                        <i class="fas fa-bell"></i>
+                        {% if unread_count %}
+                        <span class="erp-notif-badge">{{ unread_count }}</span>
+                        {% endif %}
+                    </button>
+                    <div class="dropdown-menu erp-dropdown">
+                        <div class="erp-dropdown-header">
+                            اعلانات
+                            {% if unread_count %}
+                            <a href="{% url 'mark_all_notifications_read' %}" class="erp-dropdown-action" onclick="return confirm('همه اعلانات خوانده شده علامت‌گذاری شود؟')">
+                                <i class="fas fa-check-double"></i> همه خوانده شد
+                            </a>
+                            {% endif %}
+                        </div>
+                        {% for notif in unread_notifications %}
+                        <a class="erp-dropdown-item" href="#">
+                            <i class="fas fa-{% if notif.type == 'warning' %}exclamation-triangle text-warning{% elif notif.type == 'error' %}times-circle text-danger{% else %}info-circle text-info{% endif %}"></i>
+                            <div>
+                                <div class="erp-dropdown-title">{{ notif.title }}</div>
+                                <small class="erp-dropdown-text">{{ notif.message|truncatechars:80 }}</small>
+                                <small class="erp-dropdown-time">{{ notif.created_at|timesince }} پیش</small>
+                            </div>
+                        </a>
+                        {% empty %}
+                        <div class="erp-dropdown-empty">
+                            <i class="fas fa-bell-slash" style="font-size:1.5rem;opacity:0.3;"></i>
+                            <div>اعلان جدیدی نیست</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                <a href="{% url 'logout' %}" class="erp-btn-danger" data-confirm="آیا از خروج اطمینان دارید؟">
+                    <i class="fas fa-sign-out-alt"></i><span>خروج</span>
+                </a>
             </div>
         </header>
-{% else %}
-    <div class="main-content">
-{% endif %}
 
+        <!-- Messages -->
         {% if messages %}
-        <div class="container-fluid px-4 pt-3">
+        <div class="erp-messages">
             {% for message in messages %}
             <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
                 <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' or message.tags == 'danger' %}times-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
@@ -129,32 +221,45 @@
         </div>
         {% endif %}
 
-        <main class="container-fluid px-4 py-3">
+        <!-- Page Content -->
+        <main class="erp-content">
             {% block content %}{% endblock %}
         </main>
     </div>
 
+{% else %}
+    <!-- Login Page (no sidebar) -->
+    <div class="erp-content">
+        {% if messages %}
+        <div class="erp-messages">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' or message.tags == 'danger' %}times-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+{% endif %}
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{% static 'js/persian-datepicker.js' %}"></script>
-    <script src="{% static 'js/main.js' %}?v=3"></script>
+    <script src="{% static 'js/main.js' %}?v=20"></script>
     <script>
-    // تبدیل تمام فیلدهای type="date" به تقویم شمسی
     document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('input[type="date"]').forEach(function(input) {
             var name = input.getAttribute('name');
             var val = input.value;
             var isRequired = input.hasAttribute('required');
             var ph = input.getAttribute('placeholder') || 'انتخاب تاریخ...';
-
-            // ایجاد hidden input برای ارسال مقدار میلادی
             var hidden = document.createElement('input');
             hidden.type = 'hidden';
             hidden.name = name;
             if (isRequired) hidden.setAttribute('required', 'required');
             if (val) hidden.value = val;
             input.parentNode.insertBefore(hidden, input);
-
-            // تبدیل به text input شمسی
             input.removeAttribute('name');
             input.removeAttribute('required');
             input.type = 'text';
@@ -162,8 +267,6 @@
             input.setAttribute('class', (input.getAttribute('class') || '') + ' jalali-date');
             input.setAttribute('placeholder', ph);
             input.style.cursor = 'pointer';
-
-            // اگر مقدار میلادی داشت، به شمسی تبدیل کن
             if (val) {
                 var parts = val.split('-');
                 if (parts.length === 3) {
@@ -174,8 +277,6 @@
                     } catch(e) {}
                 }
             }
-
-            // هنگام انتخاب تاریخ، مقدار میلادی در hidden ذخیره شود
             input.addEventListener('change', function() {
                 var v = this.value;
                 if (v && v.indexOf('/') > -1) {
@@ -185,11 +286,9 @@
                 }
             });
         });
-        // re-init datepickers after conversion
         if (window.initPersianDatepickers) window.initPersianDatepickers();
     });
 
-    // توابع کمکی تبدیل تاریخ
     function jalaliToGregorianJS(jy, jm, jd) {
         var jy2 = jy + 1595;
         var days = -355668 + (365 * jy2) + (Math.floor(jy2 / 33) * 8) + Math.floor(((jy2 % 33) + 3) / 4) + jd;

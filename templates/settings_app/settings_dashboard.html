@@ -12,21 +12,11 @@
     <div class="col-md-6">
         <div class="settings-section animate-in">
             <h5><i class="fas fa-building"></i> اطلاعات کارخانه</h5>
-            {% for s in settings %}
-            {% if s.key == 'company_name' %}
+            {% for key, field in settings_dict.general.items %}
+            {% if key != 'company_logo' %}
             <div class="mb-3">
-                <label class="form-label">نام شرکت</label>
-                <input type="text" name="{{ s.key }}" value="{{ s.value }}" class="form-control">
-            </div>
-            {% elif s.key == 'company_phone' %}
-            <div class="mb-3">
-                <label class="form-label">تلفن</label>
-                <input type="text" name="{{ s.key }}" value="{{ s.value }}" class="form-control">
-            </div>
-            {% elif s.key == 'company_address' %}
-            <div class="mb-3">
-                <label class="form-label">آدرس</label>
-                <input type="text" name="{{ s.key }}" value="{{ s.value }}" class="form-control">
+                <label class="form-label">{{ field.label }}</label>
+                <input type="text" name="{{ key }}" value="{{ field.value }}" class="form-control" placeholder="{{ field.label }}">
             </div>
             {% endif %}
             {% endfor %}
@@ -67,23 +57,18 @@
         <div class="settings-section animate-in mb-3">
             <h5><i class="fas fa-coins"></i> تنظیمات مالی</h5>
             <div class="compact-grid">
-                {% for s in settings %}
-                {% if s.key == 'currency' %}
+                {% for key, field in settings_dict.financial.items %}
                 <div class="compact-row">
-                    <label class="compact-label">واحد پول</label>
-                    <input type="text" name="{{ s.key }}" value="{{ s.value }}" class="form-control compact-input">
+                    <label class="compact-label">{{ field.label }}</label>
+                    {% if key == 'currency' %}
+                    <select name="{{ key }}" class="form-control compact-input">
+                        <option value="ریال" {% if field.value == 'ریال' %}selected{% endif %}>ریال</option>
+                        <option value="دلار" {% if field.value == 'دلار' %}selected{% endif %}>دلار</option>
+                    </select>
+                    {% else %}
+                    <input type="number" name="{{ key }}" value="{{ field.value }}" class="form-control compact-input" step="0.1" min="0">
+                    {% endif %}
                 </div>
-                {% elif s.key == 'tax_rate' %}
-                <div class="compact-row">
-                    <label class="compact-label">مالیات (%)</label>
-                    <input type="number" name="{{ s.key }}" value="{{ s.value }}" class="form-control compact-input" step="0.1" min="0" max="100">
-                </div>
-                {% elif s.key == 'default_profit_percent' %}
-                <div class="compact-row">
-                    <label class="compact-label">سود پیش‌فرض (%)</label>
-                    <input type="number" name="{{ s.key }}" value="{{ s.value }}" class="form-control compact-input" step="0.1" min="0">
-                </div>
-                {% endif %}
                 {% endfor %}
             </div>
         </div>
@@ -92,43 +77,24 @@
         <div class="settings-section animate-in mb-3">
             <h5><i class="fas fa-warehouse"></i> انبار</h5>
             <div class="compact-grid">
-                {% for s in settings %}
-                {% if s.key == 'low_stock_threshold' %}
+                {% for key, field in settings_dict.inventory.items %}
                 <div class="compact-row">
-                    <label class="compact-label">آستانه کمبود موجودی</label>
-                    <input type="number" name="{{ s.key }}" value="{{ s.value }}" class="form-control compact-input" min="0">
+                    <label class="compact-label">{{ field.label }}</label>
+                    <input type="number" name="{{ key }}" value="{{ field.value }}" class="form-control compact-input" min="0">
                 </div>
-                {% elif s.key == 'out_of_stock_threshold' %}
-                <div class="compact-row">
-                    <label class="compact-label">آستانه اتمام موجودی</label>
-                    <input type="number" name="{{ s.key }}" value="{{ s.value }}" class="form-control compact-input" min="0">
-                </div>
-                {% endif %}
                 {% endfor %}
             </div>
         </div>
 
         <!-- Price Multipliers -->
         <div class="settings-section animate-in">
-            <h5><i class="fas fa-percentage"></i> ضرایب قیمت</h5>
-            <div class="compact-grid">
-                {% for s in settings %}
-                {% if 'multiplier' in s.key %}
-                <div class="compact-row">
-                    <label class="compact-label">
-                        {% if s.key == 'material_multiplier' %}مواد اولیه
-                        {% elif s.key == 'labor_multiplier' %}دستمزد
-                        {% elif s.key == 'overhead_multiplier' %}سربار
-                        {% elif s.key == 'dealer_multiplier' %}فروشنده
-                        {% elif s.key == 'retail_multiplier' %}خرده‌فروشی
-                        {% elif s.key == 'wholesale_multiplier' %}عمده‌فروشی
-                        {% elif s.key == 'export_multiplier' %}صادراتی
-                        {% elif s.key == 'special_multiplier' %}ویژه
-                        {% else %}{{ s.key }}{% endif %} (%)
-                    </label>
-                    <input type="number" name="{{ s.key }}" value="{{ s.value|to_percent }}" class="form-control compact-input" step="0.1" min="0" placeholder="%">
+            <h5><i class="fas fa-percentage"></i> ضرایب قیمت (%)</h5>
+            <div class="multiplier-grid">
+                {% for key, field in settings_dict.multipliers.items %}
+                <div class="mult-item">
+                    <label class="mult-label">{{ field.label }}</label>
+                    <input type="number" name="{{ key }}" value="{{ field.value }}" class="form-control mult-input" step="0.1" min="0">
                 </div>
-                {% endif %}
                 {% endfor %}
             </div>
         </div>
@@ -144,6 +110,19 @@
 .compact-row { display: flex; align-items: center; gap: 12px; }
 .compact-label { min-width: 150px; font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap; margin: 0; }
 .compact-input { max-width: 140px; text-align: center; font-size: 0.9rem; padding: 6px 10px; }
+
+.multiplier-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px;
+}
+.mult-item {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg-table-row); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 6px 10px;
+}
+.mult-label { font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap; flex: 1; margin: 0; }
+.mult-input { max-width: 80px; text-align: center; font-size: 0.85rem; padding: 4px 6px; height: 30px; border-radius: var(--radius-sm); }
+
+@media (max-width: 576px) { .multiplier-grid { grid-template-columns: 1fr; } }
 
 .logo-upload-wrapper { margin-top: 4px; }
 .logo-preview {

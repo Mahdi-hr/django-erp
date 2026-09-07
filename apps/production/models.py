@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 
 
 class ProductionOrder(models.Model):
@@ -77,9 +78,6 @@ class ProductionOrder(models.Model):
         self.status = 'completed'
         self.end_date = timezone.now().date()
         self.save(update_fields=['status', 'end_date'])
-
-
-from django.utils import timezone
 
 
 class ProductionMaterial(models.Model):

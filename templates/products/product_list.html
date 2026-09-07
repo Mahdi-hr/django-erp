@@ -64,7 +64,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for p in products %}
+                        {% for p in page_obj %}
                         <tr>
                             <td>{{ p.code }}</td>
                             <td>{{ p.name }}</td>
@@ -99,5 +99,6 @@
             </div>
         </div>
     </div>
+    {% include "includes/pagination.html" %}
 </div>
 {% endblock %}

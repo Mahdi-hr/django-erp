@@ -7,28 +7,62 @@
         initAlerts();
         initConfirms();
         initSmsPreview();
+        initCsrfSetup();
     });
+
+    function initCsrfSetup() {
+        var csrfToken = document.querySelector('meta[name="csrf-token"]');
+        if (csrfToken) {
+            window.csrfToken = csrfToken.getAttribute('content');
+        }
+    }
 
     function initSidebar() {
         var btn = document.getElementById('sidebarToggle');
         var sidebar = document.getElementById('sidebar');
         var overlay = document.getElementById('sidebarOverlay');
+
         if (btn && sidebar) {
             btn.addEventListener('click', function() {
                 sidebar.classList.toggle('active');
                 if (overlay) overlay.classList.toggle('active');
+                document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
             });
         }
+
         if (overlay) {
             overlay.addEventListener('click', function() {
-                sidebar.classList.remove('active');
-                overlay.classList.remove('active');
+                closeSidebar();
             });
         }
+
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape' && sidebar && sidebar.classList.contains('active')) {
-                sidebar.classList.remove('active');
-                if (overlay) overlay.classList.remove('active');
+                closeSidebar();
+            }
+        });
+
+        // Close sidebar on nav link click (mobile)
+        if (sidebar) {
+            sidebar.querySelectorAll('.erp-nav-link').forEach(function(link) {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth <= 991) {
+                        closeSidebar();
+                    }
+                });
+            });
+        }
+
+        function closeSidebar() {
+            if (sidebar) sidebar.classList.remove('active');
+            if (overlay) overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Auto-close sidebar on resize to desktop
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 991) {
+                closeSidebar();
             }
         });
     }
@@ -58,7 +92,7 @@
         });
         th.classList.add('sorted', 'sorted-' + dir);
         var icon = th.querySelector('.sort-icon');
-        if (icon) { icon.className = 'fas fa-sort-' + (dir === 'asc' ? 'up' : 'down') + ' sort-icon ms-1'; icon.style.opacity = '1'; icon.style.color = 'var(--accent)'; }
+        if (icon) { icon.className = 'fas fa-sort-' + (dir === 'asc' ? 'up' : 'down') + ' sort-icon ms-1'; icon.style.opacity = '1'; icon.style.color = 'var(--erp-accent)'; }
         rows.sort(function(a, b) {
             var av = a.cells[col] ? a.cells[col].textContent.trim() : '';
             var bv = b.cells[col] ? b.cells[col].textContent.trim() : '';

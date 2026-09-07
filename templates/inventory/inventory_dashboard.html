@@ -45,7 +45,7 @@
         <div class="card animate-in">
             <div class="card-header" style="background:linear-gradient(135deg, rgba(16,185,129,0.1), rgba(16,185,129,0.05));">
                 <i class="fas fa-cubes" style="color:var(--success);"></i> مواد اولیه
-                <span class="badge bg-success me-auto">{{ materials|length }} نوع</span>
+                <span class="badge bg-success me-auto">{{ materials.paginator.count }} نوع</span>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover mb-0">
@@ -91,6 +91,29 @@
                     </tbody>
                 </table>
             </div>
+            {% if materials.has_other_pages %}
+            <div class="card-body pt-2 pb-3">
+                <nav class="d-flex justify-content-center">
+                    <ul class="pagination pagination-sm mb-0">
+                        {% if materials.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?materials_page=1{% for key, value in request.GET.items %}{% if key != 'materials_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"><i class="fas fa-angle-double-right"></i></a></li>
+                        <li class="page-item"><a class="page-link" href="?materials_page={{ materials.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'materials_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"><i class="fas fa-angle-right"></i></a></li>
+                        {% endif %}
+                        {% for num in materials.paginator.page_range %}
+                            {% if materials.number == num %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                            {% elif num > materials.number|add:'-3' and num < materials.number|add:'3' %}
+                            <li class="page-item"><a class="page-link" href="?materials_page={{ num }}{% for key, value in request.GET.items %}{% if key != 'materials_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+                        {% if materials.has_next %}
+                        <li class="page-item"><a class="page-link" href="?materials_page={{ materials.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'materials_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"><i class="fas fa-angle-left"></i></a></li>
+                        <li class="page-item"><a class="page-link" href="?materials_page={{ materials.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'materials_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"><i class="fas fa-angle-double-left"></i></a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
         </div>
     </div>
 
@@ -99,7 +122,7 @@
         <div class="card animate-in">
             <div class="card-header" style="background:linear-gradient(135deg, rgba(6,182,212,0.1), rgba(6,182,212,0.05));">
                 <i class="fas fa-box" style="color:var(--info);"></i> کالاهای تولید شده
-                <span class="badge bg-info me-auto">{{ product_inventories|length }} نوع</span>
+                <span class="badge bg-info me-auto">{{ product_inventories.paginator.count }} نوع</span>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover mb-0">
@@ -145,6 +168,29 @@
                     </tbody>
                 </table>
             </div>
+            {% if product_inventories.has_other_pages %}
+            <div class="card-body pt-2 pb-3">
+                <nav class="d-flex justify-content-center">
+                    <ul class="pagination pagination-sm mb-0">
+                        {% if product_inventories.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?products_page=1{% for key, value in request.GET.items %}{% if key != 'products_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"><i class="fas fa-angle-double-right"></i></a></li>
+                        <li class="page-item"><a class="page-link" href="?products_page={{ product_inventories.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'products_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"><i class="fas fa-angle-right"></i></a></li>
+                        {% endif %}
+                        {% for num in product_inventories.paginator.page_range %}
+                            {% if product_inventories.number == num %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                            {% elif num > product_inventories.number|add:'-3' and num < product_inventories.number|add:'3' %}
+                            <li class="page-item"><a class="page-link" href="?products_page={{ num }}{% for key, value in request.GET.items %}{% if key != 'products_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+                        {% if product_inventories.has_next %}
+                        <li class="page-item"><a class="page-link" href="?products_page={{ product_inventories.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'products_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"><i class="fas fa-angle-left"></i></a></li>
+                        <li class="page-item"><a class="page-link" href="?products_page={{ product_inventories.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'products_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"><i class="fas fa-angle-double-left"></i></a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -197,6 +243,29 @@
                     </tbody>
                 </table>
             </div>
+            {% if transactions.has_other_pages %}
+            <div class="card-body pt-2 pb-3">
+                <nav class="d-flex justify-content-center">
+                    <ul class="pagination pagination-sm mb-0">
+                        {% if transactions.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?transactions_page=1{% for key, value in request.GET.items %}{% if key != 'transactions_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"><i class="fas fa-angle-double-right"></i></a></li>
+                        <li class="page-item"><a class="page-link" href="?transactions_page={{ transactions.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'transactions_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"><i class="fas fa-angle-right"></i></a></li>
+                        {% endif %}
+                        {% for num in transactions.paginator.page_range %}
+                            {% if transactions.number == num %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                            {% elif num > transactions.number|add:'-3' and num < transactions.number|add:'3' %}
+                            <li class="page-item"><a class="page-link" href="?transactions_page={{ num }}{% for key, value in request.GET.items %}{% if key != 'transactions_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+                        {% if transactions.has_next %}
+                        <li class="page-item"><a class="page-link" href="?transactions_page={{ transactions.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'transactions_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"><i class="fas fa-angle-left"></i></a></li>
+                        <li class="page-item"><a class="page-link" href="?transactions_page={{ transactions.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'transactions_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"><i class="fas fa-angle-double-left"></i></a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
         </div>
     </div>
 
@@ -246,6 +315,29 @@
                     </tbody>
                 </table>
             </div>
+            {% if product_transactions.has_other_pages %}
+            <div class="card-body pt-2 pb-3">
+                <nav class="d-flex justify-content-center">
+                    <ul class="pagination pagination-sm mb-0">
+                        {% if product_transactions.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?product_tx_page=1{% for key, value in request.GET.items %}{% if key != 'product_tx_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"><i class="fas fa-angle-double-right"></i></a></li>
+                        <li class="page-item"><a class="page-link" href="?product_tx_page={{ product_transactions.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'product_tx_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"><i class="fas fa-angle-right"></i></a></li>
+                        {% endif %}
+                        {% for num in product_transactions.paginator.page_range %}
+                            {% if product_transactions.number == num %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                            {% elif num > product_transactions.number|add:'-3' and num < product_transactions.number|add:'3' %}
+                            <li class="page-item"><a class="page-link" href="?product_tx_page={{ num }}{% for key, value in request.GET.items %}{% if key != 'product_tx_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+                        {% if product_transactions.has_next %}
+                        <li class="page-item"><a class="page-link" href="?product_tx_page={{ product_transactions.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'product_tx_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"><i class="fas fa-angle-left"></i></a></li>
+                        <li class="page-item"><a class="page-link" href="?product_tx_page={{ product_transactions.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'product_tx_page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"><i class="fas fa-angle-double-left"></i></a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>

@@ -20,6 +20,12 @@
             <i class="fas fa-money-bill ms-1"></i> ثبت پرداخت
         </button>
         {% endif %}
+        {% if invoice.customer.phone %}
+        <button class="btn btn-sm" data-bs-toggle="modal" data-bs-target="#smsModal"
+                style="background:linear-gradient(135deg,#10b981,#34d399);color:#fff;border:1px solid rgba(16,185,129,0.3);border-radius:var(--radius-full);font-size:0.78rem;">
+            <i class="fas fa-sms ms-1"></i> ارسال پیامک
+        </button>
+        {% endif %}
         <a href="{% url 'invoice_edit' invoice.pk %}" class="btn btn-outline-primary">
             <i class="fas fa-edit ms-1"></i> ویرایش
         </a>
@@ -143,6 +149,51 @@
     </div>
 </div>
 
+<!-- SMS Modal -->
+<div class="modal fade" id="smsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background:var(--bg-modal);border:1px solid var(--border);">
+            <form method="post" action="{% url 'send_invoice_sms' invoice.pk %}">
+                {% csrf_token %}
+                <div class="modal-header" style="border-bottom:1px solid var(--border);">
+                    <h5 class="modal-title" style="color:var(--text-primary);"><i class="fas fa-sms ms-1" style="color:var(--success);"></i> ارسال پیامک فاکتور</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter:invert(1);"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label" style="color:var(--text-secondary);">مشتری: <strong style="color:var(--text-primary);">{{ invoice.customer.name }}</strong></label>
+                        <div><code style="background:var(--bg-input);padding:2px 8px;border-radius:4px;">{{ invoice.customer.phone }}</code></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" style="color:var(--text-secondary);">انتخاب قالب (اختیاری)</label>
+                        <select name="template_id" class="form-select" style="background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);" id="sms-template-select">
+                            <option value="">-- نوشتن دستی --</option>
+                            {% for tpl in sms_templates %}
+                            <option value="{{ tpl.pk }}" data-body="{{ tpl.body|escape }}">{{ tpl.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" style="color:var(--text-secondary);">متن پیامک</label>
+                        <textarea name="message" class="form-control" rows="5" id="sms-message-input"
+                                  style="background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);"
+                                  placeholder="متن پیامک را بنویسید..."></textarea>
+                        <small style="color:var(--text-muted);font-size:0.7rem;">
+                            متغیرها: <code>{name}</code> <code>{invoice_number}</code> <code>{total}</code> <code>{remaining}</code> <code>{date}</code>
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top:1px solid var(--border);">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">انصراف</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane ms-1"></i> ارسال
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- Payment Modal -->
 <div class="modal fade" id="paymentModal" tabindex="-1">
     <div class="modal-dialog">
@@ -194,5 +245,16 @@ document.getElementById('fillRemainingBtn').addEventListener('click', function()
     amountInput.value = {{ invoice.remaining_amount }};
     amountInput.focus();
 });
+
+var smsTemplateSelect = document.getElementById('sms-template-select');
+var smsMessageInput = document.getElementById('sms-message-input');
+if (smsTemplateSelect && smsMessageInput) {
+    smsTemplateSelect.addEventListener('change', function() {
+        var selected = this.selectedOptions[0];
+        if (selected && selected.value) {
+            smsMessageInput.value = selected.dataset.body || '';
+        }
+    });
+}
 </script>
 {% endblock %}

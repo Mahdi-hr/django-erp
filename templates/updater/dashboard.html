@@ -293,7 +293,7 @@
         </div>
         <div style="display:flex;gap:8px;justify-content:flex-end;">
             <button class="upd-btn upd-btn-outline" onclick="document.getElementById('updateModal').classList.remove('show')">لغو</button>
-            <form method="post" action="{% url 'updater:perform_update' %}" style="display:inline;">
+            <form method="post" action="{% url 'perform_update' %}" style="display:inline;">
                 {% csrf_token %}
                 <input type="hidden" name="confirm" value="yes">
                 <button type="submit" class="upd-btn upd-btn-warning" onclick="startUpdate()">
@@ -344,7 +344,7 @@ function checkUpdates() {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال بررسی...';
     result.innerHTML = '';
 
-    fetch('{% url "updater:check_updates" %}', {
+    fetch('{% url "check_updates" %}', {
         method: 'POST',
         headers: { 'X-CSRFToken': '{{ csrf_token }}' }
     })
@@ -385,7 +385,7 @@ function confirmRollback(path) {
 function doRollback() {
     const path = document.getElementById('rollbackPath').value;
     hideModal('rollbackModal');
-    fetch('{% url "updater:rollback" %}', {
+    fetch('{% url "rollback" %}', {
         method: 'POST',
         headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'backup_path=' + encodeURIComponent(path)

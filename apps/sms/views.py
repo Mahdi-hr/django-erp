@@ -1,8 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 from .models import SMSTemplate, SMSMessage, SMSProviderConfig
-from .forms import SMSTemplateForm, SendSMSForm, BulkSMSForm, SMSProviderConfigForm
+from .forms import SMSTemplateForm, SendSMSForm, SMSProviderConfigForm
 
 
 @login_required
@@ -83,81 +85,201 @@ def template_delete(request, pk):
 
 
 @login_required
+def template_preview(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=400)
+    template_id = request.POST.get('template_id')
+    customer_id = request.POST.get('customer_id')
+    try:
+        tpl = SMSTemplate.objects.get(pk=template_id)
+    except SMSTemplate.DoesNotExist:
+        return JsonResponse({'error': 'قالب یافت نشد'}, status=404)
+
+    context = {}
+    if customer_id:
+        from apps.customers.models import Customer
+        try:
+            c = Customer.objects.get(pk=customer_id)
+            context = {
+                'name': c.name or '',
+                'company': c.company or '',
+                'phone': c.phone or '',
+            }
+        except Customer.DoesNotExist:
+            pass
+
+    from django.conf import settings
+    from django.utils import timezone
+    import jdatetime
+    context.setdefault('company_name', getattr(settings, 'COMPANY_NAME', 'شرکت'))
+    context.setdefault('date', jdatetime.date.today().strftime('%Y/%m/%d'))
+    context.setdefault('time', timezone.now().strftime('%H:%M'))
+
+    rendered = tpl.render(**context)
+    return JsonResponse({'rendered': rendered, 'body': tpl.body})
+
+
+@login_required
 def send_sms(request):
     if request.method == 'POST':
         form = SendSMSForm(request.POST)
         if form.is_valid():
-            phone = form.cleaned_data['phone']
+            customer_ids = request.POST.getlist('customers')
             message_text = form.cleaned_data['message']
             template = form.cleaned_data.get('template')
-            try:
-                from apps.sms.tasks import send_sms_task
-                send_sms_task.delay(phone, message_text, 'demo', None, template.pk if template else None, request.user.pk)
-                messages.success(request, 'پیامک در صف ارسال قرار گرفت')
-            except Exception:
-                from apps.sms.services import send_sms as do_send_sms
-                status, msg_id = do_send_sms(phone, message_text, 'demo')
-                SMSMessage.objects.create(
-                    phone=phone, message=message_text, status=status,
-                    provider='demo', provider_message_id=str(msg_id) if msg_id else '',
-                    error_message='' if status == 'sent' else str(msg_id),
-                    sent_by=request.user,
-                )
-                if status == 'sent':
-                    messages.success(request, 'پیامک با موفقیت ارسال شد')
-                else:
-                    messages.warning(request, f'خطا در ارسال: {msg_id}')
+
+            from apps.customers.models import Customer
+            if customer_ids:
+                customers = Customer.objects.filter(pk__in=customer_ids, is_active=True)
+            else:
+                customers = Customer.objects.none()
+
+            if not customers.exists():
+                messages.warning(request, 'لطفاً حداقل یک مشتری انتخاب کنید')
+                return redirect('send_sms')
+
+            from django.conf import settings
+            from datetime import date
+            company_name = getattr(settings, 'COMPANY_NAME', 'شرکت')
+            today_str = date.today().strftime('%Y/%m/%d')
+
+            sent_count = 0
+            failed_count = 0
+            from apps.sms.services import send_sms as do_send_sms
+            for customer in customers:
+                if not customer.phone:
+                    continue
+                personal_msg = message_text
+                personal_msg = personal_msg.replace('{name}', customer.name or '')
+                personal_msg = personal_msg.replace('{customer}', customer.name or '')
+                personal_msg = personal_msg.replace('{phone}', customer.phone or '')
+                personal_msg = personal_msg.replace('{company}', customer.company or '')
+                personal_msg = personal_msg.replace('{company_name}', company_name)
+                personal_msg = personal_msg.replace('{date}', today_str)
+
+                try:
+                    from apps.sms.tasks import send_sms_task
+                    send_sms_task.delay(
+                        customer.phone, personal_msg, 'demo',
+                        customer.pk, template.pk if template else None,
+                        request.user.pk
+                    )
+                except Exception:
+                    status, msg_id = do_send_sms(customer.phone, personal_msg, 'demo')
+                    SMSMessage.objects.create(
+                        customer=customer, phone=customer.phone, message=personal_msg,
+                        status=status, provider='demo',
+                        provider_message_id=str(msg_id) if msg_id else '',
+                        error_message='' if status == 'sent' else str(msg_id),
+                        template=template,
+                        sent_by=request.user,
+                    )
+                    if status == 'sent':
+                        sent_count += 1
+                    else:
+                        failed_count += 1
+
+            total = len([c for c in customers if c.phone])
+            if failed_count:
+                messages.warning(request, f'{sent_count} پیامک ارسال شد و {failed_count} ناموفق بود از {total} پیامک')
+            else:
+                messages.success(request, f'{total} پیامک در صف ارسال قرار گرفت')
             return redirect('sms_dashboard')
     else:
         form = SendSMSForm()
     templates_list = SMSTemplate.objects.filter(is_active=True)
-    return render(request, 'sms/send_sms.html', {'form': form, 'title': 'ارسال پیامک', 'templates_list': templates_list})
+    from apps.customers.models import Customer
+    customers = Customer.objects.filter(is_active=True).order_by('name')
+    return render(request, 'sms/send_sms.html', {
+        'form': form,
+        'title': 'ارسال پیامک',
+        'templates_list': templates_list,
+        'customers': customers,
+    })
 
 
 @login_required
-def send_bulk_sms(request):
-    if request.method == 'POST':
-        message_text = request.POST.get('message', '')
-        customer_ids = request.POST.getlist('customers')
-        from apps.customers.models import Customer
-        customers = Customer.objects.filter(pk__in=customer_ids, is_active=True)
-        from django.conf import settings
-        company_name = getattr(settings, 'COMPANY_NAME', 'شرکت')
-        from datetime import date
-        today_str = date.today().strftime('%Y/%m/%d')
+@require_POST
+def send_invoice_sms(request, invoice_pk):
+    from apps.invoices.models import Invoice
+    invoice = get_object_or_404(Invoice, pk=invoice_pk)
+    customer = invoice.customer
 
-        sent_count = 0
-        from apps.sms.services import send_sms as do_send_sms
-        for customer in customers:
-            if not customer.phone:
-                continue
-            personal_msg = message_text
-            personal_msg = personal_msg.replace('{customer}', customer.name or '')
-            personal_msg = personal_msg.replace('{phone}', customer.phone or '')
-            personal_msg = personal_msg.replace('{company}', company_name)
-            personal_msg = personal_msg.replace('{date}', today_str)
-            status, msg_id = do_send_sms(customer.phone, personal_msg, 'demo')
-            SMSMessage.objects.create(
-                customer=customer, phone=customer.phone, message=personal_msg,
-                status=status, provider='demo',
-                provider_message_id=str(msg_id) if msg_id else '',
-                error_message='' if status == 'sent' else str(msg_id),
-                sent_by=request.user,
+    if not customer or not customer.phone:
+        messages.warning(request, 'شماره تلفن مشتری ثبت نشده است')
+        return redirect('invoice_detail', pk=invoice_pk)
+
+    template_id = request.POST.get('template_id')
+    message_text = request.POST.get('message', '')
+
+    if template_id:
+        try:
+            tpl = SMSTemplate.objects.get(pk=template_id)
+            message_text = tpl.render(
+                name=customer.name or '',
+                customer=customer.name or '',
+                phone=customer.phone or '',
+                company=customer.company or '',
+                invoice_number=invoice.invoice_number or '',
+                total=f'{int(invoice.total):,}',
+                paid_amount=f'{int(invoice.paid_amount):,}',
+                remaining=f'{int(invoice.remaining_amount):,}',
+                status=invoice.get_status_display() or '',
+                date=str(invoice.issue_date or ''),
             )
-            if status == 'sent':
-                sent_count += 1
-        messages.success(request, f'{sent_count} پیامک ارسال شد از {len(customers)} پیامک')
-        return redirect('sms_dashboard')
-    from apps.customers.models import Customer
-    customers = Customer.objects.filter(is_active=True, phone__isnull=False).exclude(phone='')
-    templates_list = SMSTemplate.objects.filter(is_active=True)
-    return render(request, 'sms/send_bulk_sms.html', {'title': 'ارسال پیامک گروهی', 'customers': customers, 'templates_list': templates_list})
+        except SMSTemplate.DoesNotExist:
+            pass
+
+    if not message_text:
+        messages.warning(request, 'متن پیامک خالی است')
+        return redirect('invoice_detail', pk=invoice_pk)
+
+    try:
+        from apps.sms.tasks import send_sms_task
+        send_sms_task.delay(
+            customer.phone, message_text, 'demo',
+            customer.pk, int(template_id) if template_id else None,
+            request.user.pk
+        )
+    except Exception:
+        from apps.sms.services import send_sms as do_send_sms
+        status, msg_id = do_send_sms(customer.phone, message_text, 'demo')
+        SMSMessage.objects.create(
+            customer=customer, invoice=invoice, phone=customer.phone,
+            message=message_text, status=status, provider='demo',
+            provider_message_id=str(msg_id) if msg_id else '',
+            error_message='' if status == 'sent' else str(msg_id),
+            sent_by=request.user,
+        )
+
+    messages.success(request, f'پیامک فاکتور {invoice.invoice_number} به {customer.phone} در صف ارسال قرار گرفت')
+    return redirect('invoice_detail', pk=invoice_pk)
 
 
 @login_required
 def message_list(request):
     messages_list = SMSMessage.objects.select_related('customer', 'sent_by').all()
-    return render(request, 'sms/message_list.html', {'messages_list': messages_list})
+
+    # Date filter
+    date_from = request.GET.get('date_from', '')
+    date_to = request.GET.get('date_to', '')
+    status_filter = request.GET.get('status', '')
+
+    if date_from:
+        messages_list = messages_list.filter(sent_at__date__gte=date_from)
+    if date_to:
+        messages_list = messages_list.filter(sent_at__date__lte=date_to)
+    if status_filter:
+        messages_list = messages_list.filter(status=status_filter)
+
+    messages_list = messages_list[:200]  # limit to 200
+
+    return render(request, 'sms/message_list.html', {
+        'messages_list': messages_list,
+        'date_from': date_from,
+        'date_to': date_to,
+        'status_filter': status_filter,
+    })
 
 
 @login_required
@@ -172,6 +294,28 @@ def delete_message(request, pk):
 def delete_all_messages(request):
     SMSMessage.objects.all().delete()
     messages.success(request, 'تمام پیامک‌ها با موفقیت حذف شدند')
+    return redirect('message_list')
+
+
+@login_required
+def delete_messages_by_date(request):
+    if request.method != 'POST':
+        return redirect('message_list')
+    date_from = request.POST.get('date_from', '')
+    date_to = request.POST.get('date_to', '')
+    status_filter = request.POST.get('status', '')
+
+    qs = SMSMessage.objects.all()
+    if date_from:
+        qs = qs.filter(sent_at__date__gte=date_from)
+    if date_to:
+        qs = qs.filter(sent_at__date__lte=date_to)
+    if status_filter:
+        qs = qs.filter(status=status_filter)
+
+    count = qs.count()
+    qs.delete()
+    messages.success(request, f'{count} پیامک حذف شد')
     return redirect('message_list')
 
 

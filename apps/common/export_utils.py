@@ -186,12 +186,20 @@ def generate_products_pdf(mode='employer'):
     now = _jalali_now()
     logo_b64 = _get_logo_base64()
 
-    # Register Tahoma font
-    try:
-        pdfmetrics.registerFont(TTFont('Tahoma', os.path.join('C:', os.sep, 'Windows', 'Fonts', 'tahoma.ttf')))
-        pdfmetrics.registerFont(TTFont('Tahoma-Bold', os.path.join('C:', os.sep, 'Windows', 'Fonts', 'tahomabd.ttf')))
-    except Exception:
-        pass
+    # Register Tahoma font (cross-platform)
+    font_paths = [
+        ('Tahoma', os.path.join('C:', os.sep, 'Windows', 'Fonts', 'tahoma.ttf')),
+        ('Tahoma', '/usr/share/fonts/truetype/msttcorefonts/tahoma.ttf'),
+        ('Tahoma', '/usr/share/fonts/TTF/tahoma.ttf'),
+        ('Tahoma-Bold', os.path.join('C:', os.sep, 'Windows', 'Fonts', 'tahomabd.ttf')),
+        ('Tahoma-Bold', '/usr/share/fonts/truetype/msttcorefonts/tahomabd.ttf'),
+        ('Tahoma-Bold', '/usr/share/fonts/TTF/tahomabd.ttf'),
+    ]
+    for font_name, font_path in font_paths:
+        try:
+            pdfmetrics.registerFont(TTFont(font_name, font_path))
+        except Exception:
+            pass
 
     logo_html = f'<img src="{logo_b64}" style="height:60px;margin-bottom:8px;">' if logo_b64 else ''
 
@@ -370,11 +378,20 @@ def generate_materials_pdf(mode='employer'):
     now = _jalali_now()
     logo_b64 = _get_logo_base64()
 
-    try:
-        pdfmetrics.registerFont(TTFont('Tahoma', os.path.join('C:', os.sep, 'Windows', 'Fonts', 'tahoma.ttf')))
-        pdfmetrics.registerFont(TTFont('Tahoma-Bold', os.path.join('C:', os.sep, 'Windows', 'Fonts', 'tahomabd.ttf')))
-    except Exception:
-        pass
+    # Register Tahoma font (cross-platform)
+    font_paths = [
+        ('Tahoma', os.path.join('C:', os.sep, 'Windows', 'Fonts', 'tahoma.ttf')),
+        ('Tahoma', '/usr/share/fonts/truetype/msttcorefonts/tahoma.ttf'),
+        ('Tahoma', '/usr/share/fonts/TTF/tahoma.ttf'),
+        ('Tahoma-Bold', os.path.join('C:', os.sep, 'Windows', 'Fonts', 'tahomabd.ttf')),
+        ('Tahoma-Bold', '/usr/share/fonts/truetype/msttcorefonts/tahomabd.ttf'),
+        ('Tahoma-Bold', '/usr/share/fonts/TTF/tahomabd.ttf'),
+    ]
+    for font_name, font_path in font_paths:
+        try:
+            pdfmetrics.registerFont(TTFont(font_name, font_path))
+        except Exception:
+            pass
 
     logo_html = f'<img src="{logo_b64}" style="height:60px;margin-bottom:8px;">' if logo_b64 else ''
 

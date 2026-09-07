@@ -20,6 +20,7 @@ redis>=8.0
 
 # Date & Time
 jdatetime>=5.3
+django_jalali>=7.0
 
 # PDF & Excel
 xhtml2pdf>=0.2

@@ -3,11 +3,14 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from .models import ProductionOrder, ProductionMaterial, DailyProduction
+from .forms import ProductionOrderForm
 from apps.products.models import Product
 from apps.workers.models import Worker
+from apps.common.decorators import role_required
 
 
 @login_required
+@role_required('admin', 'operator')
 def order_list(request):
     orders = ProductionOrder.objects.select_related('product').all()
     status = request.GET.get('status', '')
@@ -17,6 +20,7 @@ def order_list(request):
 
 
 @login_required
+@role_required('admin', 'operator')
 def order_create(request):
     if request.method == 'POST':
         form = ProductionOrderForm(request.POST)
@@ -69,6 +73,15 @@ def order_complete(request, pk):
         return redirect('order_detail', pk=pk)
     try:
         order.complete_production()
+        from apps.common.models import create_notification
+        create_notification(
+            request.user,
+            'سفارش تولید تکمیل شد',
+            f'سفارش تولید #{order.pk} - {order.product.name} x {order.quantity} با موفقیت تکمیل شد.',
+            'success' if hasattr(__import__('django.contrib.messages', fromlist=['constants']), 'constants') else 'info',
+            'production_order',
+            order.pk,
+        )
         messages.success(request, 'تولید با موفقیت تکمیل شد')
     except ValueError as e:
         messages.error(request, str(e))
@@ -94,6 +107,7 @@ def daily_production_list(request):
 
 
 @login_required
+@role_required('admin', 'operator')
 def daily_production_create(request):
     products = Product.objects.all()
     workers = Worker.objects.all()
@@ -149,6 +163,14 @@ def daily_production_create(request):
                 errors.append(f'{product.name}: {str(e)}')
 
         if created_count > 0:
+            from apps.common.models import create_notification
+            create_notification(
+                request.user,
+                'تولید روزانه ثبت شد',
+                f'{created_count} ردیف تولید توسط {worker.name} در تاریخ {production_date} ثبت شد.',
+                'info',
+                'daily_production',
+            )
             messages.success(request, f'{created_count} ردیف تولید با موفقیت ثبت شد')
         for err in errors:
             messages.error(request, err)
@@ -167,6 +189,7 @@ def daily_production_create(request):
 
 
 @login_required
+@role_required('admin', 'operator')
 def daily_production_edit(request, pk):
     dp = get_object_or_404(DailyProduction, pk=pk)
     products = Product.objects.all()
@@ -205,6 +228,7 @@ def daily_production_edit(request, pk):
 
 
 @login_required
+@role_required('admin', 'operator')
 def daily_production_delete(request, pk):
     dp = get_object_or_404(DailyProduction, pk=pk)
     if request.method == 'POST':

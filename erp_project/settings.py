@@ -120,9 +120,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'users.User'
 
-LOGIN_URL = '/accounts/login/'
+LOGIN_URL = '/users/'
 LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/accounts/login/'
+LOGOUT_REDIRECT_URL = '/users/'
 
 # Crispy Forms
 CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap5'
@@ -186,8 +186,8 @@ if not DEBUG:
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
 
-# Tax percentage for invoices
-TAX_PERCENT = int(os.getenv('TAX_PERCENT', '10'))
+# Tax percentage for invoices — stored in Setting model as 'tax_rate'
+# Default is 10%. Override via admin or Setting.set_value('tax_rate', '15')
 
 # Company name
 COMPANY_NAME = os.getenv('COMPANY_NAME', 'شرکت')

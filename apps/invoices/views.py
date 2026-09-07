@@ -1,9 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.core.paginator import Paginator
 from .models import Invoice, InvoiceItem
 from .forms import InvoiceForm, InvoiceItemFormSet, PaymentForm
 from apps.common.models import Setting
+from apps.common.decorators import role_required
 
 
 def _get_product_prices():
@@ -37,14 +39,18 @@ def invoice_list(request):
         invoices = invoices.filter(status=status)
     if type_filter:
         invoices = invoices.filter(type=type_filter)
+    paginator = Paginator(invoices, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
     return render(request, 'invoices/invoice_list.html', {
-        'invoices': invoices,
+        'page_obj': page_obj,
         'status': status,
         'type_filter': type_filter,
     })
 
 
 @login_required
+@role_required('admin', 'accountant')
 def invoice_create(request):
     tax_percent = _get_tax_rate()
     stock_errors = []
@@ -72,6 +78,15 @@ def invoice_create(request):
                             'stock_errors': stock_errors,
                         })
                 invoice.apply_product_inventory()
+                from apps.common.models import create_notification
+                create_notification(
+                    request.user,
+                    'فاکتور جدید صادر شد',
+                    f'فاکتور شماره {invoice.invoice_number} به مبلغ {invoice.total:,} ریال برای {invoice.customer.name} صادر شد.',
+                    'info',
+                    'invoice',
+                    invoice.pk,
+                )
                 messages.success(request, 'فاکتور با موفقیت ایجاد شد')
                 return redirect('invoice_detail', pk=invoice.pk)
     else:
@@ -89,14 +104,20 @@ def invoice_detail(request, pk):
     invoice = get_object_or_404(Invoice, pk=pk)
     items = invoice.items.select_related('product').all()
     payment_form = PaymentForm()
+    from apps.sms.models import SMSTemplate
+    sms_templates = SMSTemplate.objects.filter(is_active=True, category='invoice')
+    if not sms_templates.exists():
+        sms_templates = SMSTemplate.objects.filter(is_active=True)[:5]
     return render(request, 'invoices/invoice_detail.html', {
         'invoice': invoice,
         'items': items,
         'payment_form': payment_form,
+        'sms_templates': sms_templates,
     })
 
 
 @login_required
+@role_required('admin', 'accountant')
 def invoice_edit(request, pk):
     tax_percent = _get_tax_rate()
     invoice = get_object_or_404(Invoice, pk=pk)
@@ -138,6 +159,7 @@ def invoice_edit(request, pk):
 
 
 @login_required
+@role_required('admin', 'accountant')
 def invoice_delete(request, pk):
     invoice = get_object_or_404(Invoice, pk=pk)
     if request.method == 'POST':
@@ -149,6 +171,7 @@ def invoice_delete(request, pk):
 
 
 @login_required
+@role_required('admin', 'accountant')
 def invoice_register_payment(request, pk):
     invoice = get_object_or_404(Invoice, pk=pk)
     if request.method == 'POST':
@@ -157,6 +180,15 @@ def invoice_register_payment(request, pk):
             amount = form.cleaned_data['amount']
             method = form.cleaned_data['method']
             invoice.register_payment(amount, method)
+            from apps.common.models import create_notification
+            create_notification(
+                request.user,
+                'پرداخت ثبت شد',
+                f'مبلغ {amount:,} ریال بابت فاکتور {invoice.invoice_number} از {invoice.customer.name} دریافت شد. (روش: {method})',
+                'info',
+                'invoice',
+                invoice.pk,
+            )
             messages.success(request, f'پرداخت {amount} ریال با موفقیت ثبت شد')
             return redirect('invoice_detail', pk=pk)
     return redirect('invoice_detail', pk=pk)

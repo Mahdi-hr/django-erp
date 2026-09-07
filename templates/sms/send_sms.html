@@ -5,80 +5,350 @@
 {% block page_icon %}sms{% endblock %}
 {% block page_title %}ارسال پیامک{% endblock %}
 
+{% block extra_css %}
+<style>
+    .sms-nav { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+    .sms-nav .btn {
+        border-radius: var(--radius-full); padding: 8px 18px; font-size: 0.82rem;
+        font-weight: 500; display: inline-flex; align-items: center; gap: 6px;
+        border: none; transition: all 0.2s;
+    }
+    .sms-nav .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+
+    .customer-table { font-size: 0.82rem; }
+    .customer-table thead th {
+        background: var(--bg-table-header) !important;
+        color: var(--text-secondary) !important; font-weight: 600;
+        font-size: 0.75rem; padding: 8px 10px; border: none;
+        position: sticky; top: 0; z-index: 1;
+    }
+    .customer-table tbody td {
+        padding: 6px 10px; vertical-align: middle; border-color: var(--border);
+    }
+    .customer-table tbody tr { background: var(--bg-table-row) !important; transition: background 0.15s; }
+    .customer-table tbody tr:hover { background: var(--bg-table-row-hover) !important; }
+    .customer-table tbody tr.selected { background: rgba(99,102,241,0.08) !important; }
+
+    .customer-table .form-check-input { cursor: pointer; }
+    .customer-table .customer-name { font-weight: 500; color: var(--text-primary); }
+    .customer-table .customer-phone {
+        background: var(--bg-input); padding: 2px 8px; border-radius: 4px;
+        font-size: 0.75rem; font-family: monospace; color: var(--text-secondary);
+    }
+    .customer-table .customer-company { color: var(--text-muted); font-size: 0.75rem; }
+
+    .template-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .template-chip {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 6px 14px; font-size: 0.78rem; font-weight: 500;
+        border: 1px solid var(--border); border-radius: var(--radius-full);
+        background: var(--bg-input); color: var(--text-secondary);
+        cursor: pointer; transition: all 0.2s;
+    }
+    .template-chip:hover { border-color: var(--accent); color: var(--accent); background: rgba(99,102,241,0.06); }
+    .template-chip.active {
+        border-color: var(--accent); color: #fff;
+        background: linear-gradient(135deg, #6366f1, #818cf8);
+    }
+
+    .preview-box {
+        background: var(--bg-table-row); border: 1px solid var(--border);
+        border-radius: var(--radius-md); padding: 14px 16px;
+        min-height: 60px; white-space: pre-wrap; font-size: 0.85rem;
+        color: var(--text-primary); line-height: 1.7;
+    }
+    .preview-box.empty { color: var(--text-muted); font-style: italic; }
+
+    .char-count { font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; text-align: left; }
+    .char-count.warn { color: var(--warning); }
+    .char-count.danger { color: var(--danger); }
+
+    .selection-bar {
+        display: flex; align-items: center; gap: 12px; padding: 8px 0;
+        border-bottom: 1px solid var(--border); margin-bottom: 8px;
+    }
+    .selection-bar .count { font-size: 0.82rem; color: var(--accent); font-weight: 600; }
+</style>
+{% endblock %}
+
 {% block content %}
-<!-- SMS Nav -->
-<div class="d-flex flex-wrap gap-2 mb-4 animate-in">
-    <a href="{% url 'sms_dashboard' %}" class="btn" style="background:linear-gradient(135deg,#6366f1,#818cf8);color:#fff;border-radius:var(--radius-full);padding:8px 18px;font-size:0.82rem;font-weight:500;display:inline-flex;align-items:center;gap:6px;">
+<div class="sms-nav animate-in">
+    <a href="{% url 'sms_dashboard' %}" class="btn" style="background:linear-gradient(135deg,#6366f1,#818cf8);color:#fff;">
         <i class="fas fa-home" style="font-size:0.75rem;"></i> داشبورد
     </a>
-    <a href="{% url 'send_sms' %}" class="btn" style="background:linear-gradient(135deg,#10b981,#34d399);color:#fff;border-radius:var(--radius-full);padding:8px 18px;font-size:0.82rem;font-weight:500;display:inline-flex;align-items:center;gap:6px;">
-        <i class="fas fa-paper-plane" style="font-size:0.75rem;"></i> ارسال تکی
+    <a href="{% url 'send_sms' %}" class="btn" style="background:linear-gradient(135deg,#10b981,#34d399);color:#fff;">
+        <i class="fas fa-paper-plane" style="font-size:0.75rem;"></i> ارسال پیامک
     </a>
-    <a href="{% url 'send_bulk_sms' %}" class="btn" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#0f172a;border-radius:var(--radius-full);padding:8px 18px;font-size:0.82rem;font-weight:500;display:inline-flex;align-items:center;gap:6px;">
-        <i class="fas fa-users" style="font-size:0.75rem;"></i> ارسال گروهی
-    </a>
-    <a href="{% url 'template_list' %}" class="btn" style="background:linear-gradient(135deg,#06b6d4,#22d3ee);color:#fff;border-radius:var(--radius-full);padding:8px 18px;font-size:0.82rem;font-weight:500;display:inline-flex;align-items:center;gap:6px;">
+    <a href="{% url 'template_list' %}" class="btn" style="background:linear-gradient(135deg,#06b6d4,#22d3ee);color:#fff;">
         <i class="fas fa-file-alt" style="font-size:0.75rem;"></i> قالب‌ها
+    </a>
+    <a href="{% url 'message_list' %}" class="btn" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#0f172a;">
+        <i class="fas fa-history" style="font-size:0.75rem;"></i> تاریخچه
+    </a>
+    <a href="{% url 'provider_config' %}" class="btn" style="background:linear-gradient(135deg,#ef4444,#f87171);color:#fff;">
+        <i class="fas fa-cog" style="font-size:0.75rem;"></i> تنظیمات
     </a>
 </div>
 
 <div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card cln-card animate-in">
-            <div class="card-header">
-                <i class="fas fa-paper-plane" style="color:var(--accent);"></i> ارسال پیامک
-            </div>
-            <div class="card-body">
-                <form method="post">
-                    {% csrf_token %}
-                    {% for field in form %}
-                    {% if field.name != 'template' %}
-                    <div class="mb-3">
-                        <label class="form-label">{{ field.label }}</label>
-                        {{ field }}
-                        {% if field.errors %}
-                        <div class="text-danger small mt-1">{{ field.errors }}</div>
-                        {% endif %}
-                    </div>
-                    {% endif %}
-                    {% endfor %}
+    <div class="col-lg-11">
+        <form method="post" id="send-sms-form">
+            {% csrf_token %}
 
+            <div class="row g-3">
+                <!-- Right: Customers + Message -->
+                <div class="col-lg-7">
+                    <!-- Customer Selection -->
+                    <div class="card cln-card animate-in" style="margin-bottom:12px;">
+                        <div class="card-header">
+                            <i class="fas fa-users" style="color:var(--accent);"></i> انتخاب مشتریان
+                            <span class="badge bg-info me-auto" id="customer-badge">{{ customers|length }} مشتری</span>
+                        </div>
+                        <div class="card-body" style="padding:10px 14px;">
+                            <div class="selection-bar">
+                                <button type="button" class="btn btn-sm" id="select-all" style="background:rgba(99,102,241,0.1);color:var(--accent);border:1px solid rgba(99,102,241,0.3);border-radius:var(--radius-full);font-size:0.78rem;">
+                                    <i class="fas fa-check-double ms-1"></i> انتخاب همه
+                                </button>
+                                <button type="button" class="btn btn-sm" id="deselect-all" style="background:rgba(239,68,68,0.1);color:var(--danger);border:1px solid rgba(239,68,68,0.3);border-radius:var(--radius-full);font-size:0.78rem;">
+                                    <i class="fas fa-times ms-1"></i> حذف انتخاب
+                                </button>
+                                <span class="count" id="selected-count">0 مشتری انتخاب شده</span>
+                                <input type="text" class="form-control form-control-sm ms-auto" id="search-customers"
+                                       placeholder="جستجو..." style="max-width:200px;background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:0.8rem;height:32px;">
+                            </div>
+                            <div style="max-height:300px;overflow-y:auto;">
+                                <table class="table customer-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th style="width:40px;"><input type="checkbox" class="form-check-input" id="header-cb"></th>
+                                            <th>نام</th>
+                                            <th>تلفن</th>
+                                            <th>شرکت</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="customer-tbody">
+                                        {% for customer in customers %}
+                                        <tr class="customer-row" data-search="{{ customer.name }} {{ customer.company }} {{ customer.phone }}">
+                                            <td>
+                                                <input class="form-check-input customer-cb" type="checkbox"
+                                                       name="customers" value="{{ customer.pk }}"
+                                                       id="customer_{{ customer.pk }}"
+                                                       data-name="{{ customer.name }}" data-phone="{{ customer.phone|default:'' }}"
+                                                       data-company="{{ customer.company|default:'' }}">
+                                            </td>
+                                            <td class="customer-name">{{ customer.name }}</td>
+                                            <td>
+                                                {% if customer.phone %}
+                                                <code class="customer-phone">{{ customer.phone }}</code>
+                                                {% else %}
+                                                <span style="color:var(--text-muted);font-size:0.75rem;">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="customer-company">{{ customer.company|default:"-" }}</td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="4" class="empty-state" style="padding:30px;">
+                                                <i class="fas fa-users d-block mb-2" style="font-size:1.5rem;"></i>
+                                                مشتری یافت نشد
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Message -->
+                    <div class="card cln-card animate-in">
+                        <div class="card-header">
+                            <i class="fas fa-comment-dots" style="color:var(--success);"></i> متن پیامک
+                        </div>
+                        <div class="card-body">
+                            <textarea name="message" id="id_message" class="form-control" rows="5"
+                                      style="background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);direction:rtl;"
+                                      placeholder="متن پیامک را اینجا بنویسید..."></textarea>
+                            <div class="char-count" id="char-count">0 کاراکتر</div>
+
+                            <div class="cln-actions" style="margin-top:12px;">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane ms-1"></i> ارسال پیامک
+                                </button>
+                                <a href="{% url 'sms_dashboard' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-right ms-1"></i> بازگشت
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Left: Templates + Preview -->
+                <div class="col-lg-5">
+                    <!-- Templates -->
                     {% if templates_list %}
-                    <div class="mb-3">
-                        <label class="form-label" style="font-weight:600;"><i class="fas fa-file-alt ms-1" style="color:var(--warning);"></i> انتخاب قالب (اختیاری)</label>
-                        <div class="d-flex flex-wrap gap-2">
-                            {% for tpl in templates_list %}
-                            <button type="button" class="btn btn-sm template-pick" data-body="{{ tpl.body|escape }}" style="background:var(--bg-input);color:var(--text-secondary);border:1px solid var(--border);border-radius:var(--radius-full);font-size:0.78rem;">
-                                <i class="fas fa-file-alt ms-1"></i> {{ tpl.name }}
-                            </button>
-                            {% endfor %}
+                    <div class="card cln-card animate-in" style="margin-bottom:12px;">
+                        <div class="card-header">
+                            <i class="fas fa-file-alt" style="color:var(--warning);"></i> قالب‌ها
+                            <span style="font-size:0.72rem;color:var(--text-muted);margin-right:auto;">روی قالب کلیک کنید</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="template-chips">
+                                {% for tpl in templates_list %}
+                                <button type="button" class="template-chip" data-id="{{ tpl.pk }}" data-body="{{ tpl.body|escape }}">
+                                    <i class="fas fa-file-alt" style="font-size:0.7rem;"></i> {{ tpl.name }}
+                                </button>
+                                {% endfor %}
+                            </div>
                         </div>
                     </div>
                     {% endif %}
 
-                    <div class="cln-actions">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-paper-plane ms-1"></i> ارسال
-                        </button>
-                        <a href="{% url 'sms_dashboard' %}" class="btn btn-outline-secondary">
-                            <i class="fas fa-arrow-right ms-1"></i> بازگشت
-                        </a>
+                    <!-- Preview -->
+                    <div class="card cln-card animate-in">
+                        <div class="card-header">
+                            <i class="fas fa-eye" style="color:var(--info);"></i> پیش‌نمایش
+                        </div>
+                        <div class="card-body">
+                            <div class="preview-box empty" id="preview-box">
+                                متن پیامک را بنویسید یا قالب انتخاب کنید...
+                            </div>
+                            <div style="margin-top:8px;">
+                                <label class="form-label" style="font-size:0.72rem;color:var(--text-muted);margin-bottom:4px;">پیش‌نمایش برای مشتری:</label>
+                                <select id="preview-customer" class="form-select form-select-sm"
+                                        style="background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);font-size:0.8rem;height:32px;">
+                                    <option value="">-- انتخاب مشتری --</option>
+                                    {% for customer in customers %}
+                                    {% if customer.phone %}
+                                    <option value="{{ customer.pk }}" data-name="{{ customer.name }}" data-company="{{ customer.company|default:'' }}" data-phone="{{ customer.phone }}">{{ customer.name }} ({{ customer.phone }})</option>
+                                    {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div style="margin-top:8px;">
+                                <small style="color:var(--text-muted);font-size:0.7rem;">
+                                    <i class="fas fa-info-circle ms-1"></i> متغیرها: <code>{name}</code> <code>{company}</code> <code>{phone}</code> <code>{date}</code> <code>{company_name}</code>
+                                </small>
+                            </div>
+                        </div>
                     </div>
-                </form>
+                </div>
             </div>
-        </div>
+        </form>
     </div>
 </div>
 
 <script>
-document.querySelectorAll('.template-pick').forEach(btn => {
-    btn.addEventListener('click', function() {
-        const textarea = document.querySelector('textarea[name="message"]');
-        if (textarea) {
-            textarea.value = this.dataset.body;
-            textarea.focus();
-        }
+(function() {
+    const form = document.getElementById('send-sms-form');
+    const tbody = document.getElementById('customer-tbody');
+    const cbs = document.querySelectorAll('.customer-cb');
+    const countEl = document.getElementById('selected-count');
+    const headerCb = document.getElementById('header-cb');
+    const searchInput = document.getElementById('search-customers');
+    const messageTextarea = document.getElementById('id_message');
+    const charCount = document.getElementById('char-count');
+    const previewBox = document.getElementById('preview-box');
+    const previewCustomer = document.getElementById('preview-customer');
+
+    function updateCount() {
+        const n = document.querySelectorAll('.customer-cb:checked').length;
+        if (countEl) countEl.textContent = n + ' مشتری انتخاب شده';
+        document.querySelectorAll('.customer-row').forEach(row => {
+            const cb = row.querySelector('.customer-cb');
+            row.classList.toggle('selected', cb && cb.checked);
+        });
+    }
+
+    cbs.forEach(cb => cb.addEventListener('change', updateCount));
+
+    document.getElementById('select-all').addEventListener('click', function() {
+        tbody.querySelectorAll('.customer-cb').forEach(cb => {
+            if (cb.closest('tr').style.display !== 'none') cb.checked = true;
+        });
+        updateCount();
     });
-});
+
+    document.getElementById('deselect-all').addEventListener('click', function() {
+        cbs.forEach(cb => { cb.checked = false; });
+        updateCount();
+    });
+
+    if (headerCb) {
+        headerCb.addEventListener('change', function() {
+            const visible = tbody.querySelectorAll('.customer-row:not([style*="display: none"]) .customer-cb');
+            visible.forEach(cb => { cb.checked = headerCb.checked; });
+            updateCount();
+        });
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const q = this.value.toLowerCase();
+            tbody.querySelectorAll('.customer-row').forEach(row => {
+                const text = (row.dataset.search || '').toLowerCase();
+                row.style.display = text.includes(q) ? '' : 'none';
+            });
+        });
+    }
+
+    function updateCharCount() {
+        const len = messageTextarea.value.length;
+        charCount.textContent = len + ' کاراکتر';
+        charCount.className = 'char-count' + (len > 160 ? ' danger' : len > 100 ? ' warn' : '');
+    }
+
+    messageTextarea.addEventListener('input', function() {
+        updateCharCount();
+        updatePreview();
+    });
+
+    function updatePreview() {
+        const text = messageTextarea.value.trim();
+        if (!text) {
+            previewBox.textContent = 'متن پیامک را بنویسید یا قالب انتخاب کنید...';
+            previewBox.classList.add('empty');
+            return;
+        }
+        previewBox.classList.remove('empty');
+
+        const sel = previewCustomer.selectedOptions[0];
+        let name = '', company = '', phone = '';
+        if (sel && sel.value) {
+            name = sel.dataset.name || '';
+            company = sel.dataset.company || '';
+            phone = sel.dataset.phone || '';
+        }
+        const now = new Date();
+        const date = now.getFullYear() + '/' + String(now.getMonth()+1).padStart(2,'0') + '/' + String(now.getDate()).padStart(2,'0');
+
+        let rendered = text;
+        rendered = rendered.replace(/\{name\}/g, name);
+        rendered = rendered.replace(/\{customer\}/g, name);
+        rendered = rendered.replace(/\{company\}/g, company);
+        rendered = rendered.replace(/\{phone\}/g, phone);
+        rendered = rendered.replace(/\{date\}/g, date);
+        rendered = rendered.replace(/\{company_name\}/g, '{{ company_name|default:"شرکت" }}');
+
+        previewBox.textContent = rendered;
+    }
+
+    if (previewCustomer) {
+        previewCustomer.addEventListener('change', updatePreview);
+    }
+
+    document.querySelectorAll('.template-chip').forEach(chip => {
+        chip.addEventListener('click', function() {
+            document.querySelectorAll('.template-chip').forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            messageTextarea.value = this.dataset.body;
+            updateCharCount();
+            updatePreview();
+            messageTextarea.focus();
+        });
+    });
+
+    updateCharCount();
+})();
 </script>
 {% endblock %}

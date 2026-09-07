@@ -63,3 +63,25 @@ class Notification(models.Model):
 
     def __str__(self):
         return self.title
+
+
+def create_notification(user, title, message, ntype='info', reference_type='', reference_id=None):
+    """ایجاد یک اعلان جدید"""
+    if not user or not user.is_authenticated:
+        return None
+    return Notification.objects.create(
+        user=user,
+        title=title,
+        message=message,
+        type=ntype,
+        reference_type=reference_type,
+        reference_id=reference_id,
+    )
+
+
+def notify_admins(title, message, ntype='info', reference_type='', reference_id=None):
+    """ارسال اعلان به تمام ادمین‌ها"""
+    from apps.users.models import User
+    admins = User.objects.filter(is_active=True, role='admin')
+    for admin in admins:
+        create_notification(admin, title, message, ntype, reference_type, reference_id)

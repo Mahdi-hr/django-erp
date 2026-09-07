@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.core.paginator import Paginator
 from django.db.models import Q
 from .models import MaterialCategory, Material, MaterialPriceHistory
 from .forms import MaterialCategoryForm, MaterialForm
@@ -58,9 +59,12 @@ def material_list(request):
         materials = materials.filter(Q(name__icontains=search) | Q(code__icontains=search))
     if category:
         materials = materials.filter(category_id=category)
+    paginator = Paginator(materials, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
     categories = MaterialCategory.objects.filter(is_active=True)
     return render(request, 'materials/material_list.html', {
-        'materials': materials,
+        'page_obj': page_obj,
         'categories': categories,
         'search': search,
         'selected_category': category,

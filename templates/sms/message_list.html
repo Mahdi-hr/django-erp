@@ -5,17 +5,30 @@
 {% block page_icon %}sms{% endblock %}
 {% block page_title %}تاریخچه پیامک‌ها{% endblock %}
 
+{% block extra_css %}
+<style>
+    .filter-bar {
+        display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;
+        padding: 14px 16px; background: var(--bg-card); border: 1px solid var(--border);
+        border-radius: var(--radius-md); margin-bottom: 16px;
+    }
+    .filter-bar .filter-group { display: flex; flex-direction: column; gap: 4px; }
+    .filter-bar .filter-label { font-size: 0.72rem; color: var(--text-muted); font-weight: 500; }
+    .filter-bar .filter-input {
+        background: var(--bg-input); border: 1px solid var(--border); color: var(--text-primary);
+        border-radius: var(--radius-sm); padding: 6px 10px; font-size: 0.82rem; height: 34px;
+    }
+    .filter-bar .filter-input:focus { border-color: var(--accent); outline: none; }
+</style>
+{% endblock %}
+
 {% block content %}
-<!-- SMS Nav -->
 <div class="d-flex flex-wrap gap-2 mb-4 animate-in">
     <a href="{% url 'sms_dashboard' %}" class="btn" style="background:linear-gradient(135deg,#6366f1,#818cf8);color:#fff;border-radius:var(--radius-full);padding:8px 18px;font-size:0.82rem;font-weight:500;display:inline-flex;align-items:center;gap:6px;">
         <i class="fas fa-home" style="font-size:0.75rem;"></i> داشبورد
     </a>
     <a href="{% url 'send_sms' %}" class="btn" style="background:linear-gradient(135deg,#10b981,#34d399);color:#fff;border-radius:var(--radius-full);padding:8px 18px;font-size:0.82rem;font-weight:500;display:inline-flex;align-items:center;gap:6px;">
-        <i class="fas fa-paper-plane" style="font-size:0.75rem;"></i> ارسال تکی
-    </a>
-    <a href="{% url 'send_bulk_sms' %}" class="btn" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#0f172a;border-radius:var(--radius-full);padding:8px 18px;font-size:0.82rem;font-weight:500;display:inline-flex;align-items:center;gap:6px;">
-        <i class="fas fa-users" style="font-size:0.75rem;"></i> ارسال گروهی
+        <i class="fas fa-paper-plane" style="font-size:0.75rem;"></i> ارسال پیامک
     </a>
     <a href="{% url 'template_list' %}" class="btn" style="background:linear-gradient(135deg,#06b6d4,#22d3ee);color:#fff;border-radius:var(--radius-full);padding:8px 18px;font-size:0.82rem;font-weight:500;display:inline-flex;align-items:center;gap:6px;">
         <i class="fas fa-file-alt" style="font-size:0.75rem;"></i> قالب‌ها
@@ -25,16 +38,52 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h5 style="margin:0; color:var(--text-primary);"><i class="fas fa-history ms-2" style="color:var(--accent);"></i> تاریخچه پیامک‌ها</h5>
     <div class="d-flex gap-2">
-        <a href="{% url 'sms_dashboard' %}" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-right ms-1"></i> بازگشت
-        </a>
         {% if messages_list %}
-        <button type="button" class="btn btn-outline-danger" id="delete-all-btn">
+        <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteByDateModal">
+            <i class="fas fa-filter ms-1"></i> حذف بر اساس تاریخ
+        </button>
+        <button type="button" class="btn btn-outline-danger btn-sm" id="delete-all-btn">
             <i class="fas fa-trash-alt ms-1"></i> حذف همه
         </button>
         {% endif %}
+        <a href="{% url 'sms_dashboard' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-right ms-1"></i> بازگشت
+        </a>
     </div>
 </div>
+
+<!-- Filter Bar -->
+<form method="get" class="filter-bar animate-in">
+    <div class="filter-group">
+        <span class="filter-label">از تاریخ</span>
+        <input type="date" name="date_from" value="{{ date_from }}" class="filter-input">
+    </div>
+    <div class="filter-group">
+        <span class="filter-label">تا تاریخ</span>
+        <input type="date" name="date_to" value="{{ date_to }}" class="filter-input">
+    </div>
+    <div class="filter-group">
+        <span class="filter-label">وضعیت</span>
+        <select name="status" class="filter-input" style="cursor:pointer;">
+            <option value="">همه</option>
+            <option value="sent" {% if status_filter == 'sent' %}selected{% endif %}>ارسال شده</option>
+            <option value="failed" {% if status_filter == 'failed' %}selected{% endif %}>ناموفق</option>
+            <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>در انتظار</option>
+        </select>
+    </div>
+    <div class="filter-group" style="align-self:flex-end;">
+        <button type="submit" class="btn btn-primary btn-sm" style="height:34px;">
+            <i class="fas fa-search ms-1"></i> فیلتر
+        </button>
+    </div>
+    {% if date_from or date_to or status_filter %}
+    <div class="filter-group" style="align-self:flex-end;">
+        <a href="{% url 'message_list' %}" class="btn btn-outline-secondary btn-sm" style="height:34px;">
+            <i class="fas fa-times ms-1"></i> پاک کردن فیلتر
+        </a>
+    </div>
+    {% endif %}
+</form>
 
 <div class="card animate-in">
     <div class="card-header">
@@ -72,7 +121,7 @@
                     <td>{{ msg.provider|default:"-" }}</td>
                     <td style="font-size:0.82rem;color:var(--text-secondary);">{{ msg.sent_at|to_jalali }}</td>
                     <td>
-                        <a href="{% url 'delete_message' msg.pk %}" class="btn btn-sm btn-outline-danger" data-confirm="آیا از حذف این پیامک اطمینان دارید؟" title="حذف">
+                        <a href="{% url 'delete_message' msg.pk %}" class="btn btn-sm btn-outline-danger" title="حذف" onclick="return confirm('حذف شود؟')">
                             <i class="fas fa-trash"></i>
                         </a>
                     </td>
@@ -87,6 +136,47 @@
                 {% endfor %}
             </tbody>
         </table>
+    </div>
+</div>
+
+<!-- Delete By Date Modal -->
+<div class="modal fade" id="deleteByDateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background:var(--bg-modal);border:1px solid var(--border);">
+            <form method="post" action="{% url 'delete_messages_by_date' %}">
+                {% csrf_token %}
+                <div class="modal-header" style="border-bottom:1px solid var(--border);">
+                    <h5 class="modal-title" style="color:var(--text-primary);"><i class="fas fa-trash-alt ms-1" style="color:var(--danger);"></i> حذف پیامک‌ها بر اساس تاریخ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter:invert(1);"></button>
+                </div>
+                <div class="modal-body">
+                    <p style="color:var(--text-secondary);font-size:0.85rem;">پیامک‌هایی که بازه زمانی مشخص شده را دارند حذف خواهند شد.</p>
+                    <div class="mb-3">
+                        <label class="form-label" style="color:var(--text-secondary);">از تاریخ</label>
+                        <input type="date" name="date_from" class="form-control" style="background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" style="color:var(--text-secondary);">تا تاریخ</label>
+                        <input type="date" name="date_to" class="form-control" style="background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" style="color:var(--text-secondary);">وضعیت</label>
+                        <select name="status" class="form-select" style="background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);">
+                            <option value="">همه وضعیت‌ها</option>
+                            <option value="sent">ارسال شده</option>
+                            <option value="failed">ناموفق</option>
+                            <option value="pending">در انتظار</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top:1px solid var(--border);">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">انصراف</button>
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('آیا از حذف پیامک‌ها اطمینان دارید؟')">
+                        <i class="fas fa-trash-alt ms-1"></i> حذف
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 

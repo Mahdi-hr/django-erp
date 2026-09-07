@@ -14,7 +14,7 @@
         {% if user.role == 'admin' %}
         <li><a class="nav-link-tab {% if active_tab == 'users' %}active{% endif %}" href="{% url 'user_list' %}"><i class="fas fa-user-shield"></i> کاربران</a></li>
         {% endif %}
-        <li><a class="nav-link-tab {% if active_tab == 'updater' %}active{% endif %}" href="{% url 'updater:dashboard' %}"><i class="fas fa-sync-alt"></i> آپدیت سیستم</a></li>
+        <li><a class="nav-link-tab {% if active_tab == 'updater' %}active{% endif %}" href="{% url 'updater_dashboard' %}"><i class="fas fa-sync-alt"></i> آپدیت سیستم</a></li>
     </ul>
 </div>
 

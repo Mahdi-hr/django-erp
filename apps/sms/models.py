@@ -12,6 +12,7 @@ class SMSTemplate(models.Model):
         ('holiday', 'تعطیلات'),
         ('birthday', 'تولد'),
         ('promotion', 'تبلیغاتی'),
+        ('invoice', 'فاکتور'),
     ]
     name = models.CharField('نام', max_length=100)
     title = models.CharField('عنوان', max_length=200)
@@ -32,7 +33,7 @@ class SMSTemplate(models.Model):
     def render(self, **kwargs):
         body = self.body
         for key, value in kwargs.items():
-            body = body.replace(f'{{{key}}}', str(value))
+            body = body.replace(f'{{{key}}}', str(value if value is not None else ''))
         return body
 
 
@@ -64,6 +65,7 @@ class SMSMessage(models.Model):
     ]
     customer = models.ForeignKey('customers.Customer', on_delete=models.SET_NULL, null=True, blank=True, verbose_name='مشتری')
     template = models.ForeignKey(SMSTemplate, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='قالب')
+    invoice = models.ForeignKey('invoices.Invoice', on_delete=models.SET_NULL, null=True, blank=True, verbose_name='فاکتور')
     phone = models.CharField('شماره تلفن', max_length=15)
     message = models.TextField('متن پیام')
     status = models.CharField('وضعیت', max_length=10, choices=STATUS_CHOICES, default='pending')

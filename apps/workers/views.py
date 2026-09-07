@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Sum, Q
+from django.core.paginator import Paginator
+from django.db.models import Sum, Q, Count, Min, Max
 from .models import Worker
 from .forms import WorkerForm
 
@@ -36,32 +37,47 @@ def worker_list(request):
     date_to_g = jalali_to_gregorian(date_to)
 
     from apps.production.models import DailyProduction
-    worker_stats = {}
-    for w in workers:
-        dps = DailyProduction.objects.filter(worker=w, status='completed')
-        if date_from_g:
-            dps = dps.filter(production_date__gte=date_from_g)
-        if date_to_g:
-            dps = dps.filter(production_date__lte=date_to_g)
+    from django.db.models import Count
 
-        total_qty = dps.aggregate(total=Sum('quantity'))['total'] or 0
-        count = dps.count()
-        first_date = dps.order_by('production_date').values_list('production_date', flat=True).first()
-        last_date = dps.order_by('-production_date').values_list('production_date', flat=True).first()
-        products = dps.values('product__name', 'product__code').annotate(
-            total_qty=Sum('quantity')
-        ).order_by('-total_qty')
-        worker_stats[w.pk] = {
-            'total_qty': total_qty,
-            'count': count,
-            'first_date': first_date,
-            'last_date': last_date,
-            'products': list(products),
+    dps = DailyProduction.objects.filter(status='completed')
+    if date_from_g:
+        dps = dps.filter(production_date__gte=date_from_g)
+    if date_to_g:
+        dps = dps.filter(production_date__lte=date_to_g)
+
+    worker_stats_raw = dps.filter(worker__in=workers).values('worker').annotate(
+        total_qty=Sum('quantity'),
+        count=Count('id'),
+        first_date=Min('production_date'),
+        last_date=Max('production_date'),
+    )
+    worker_stats = {ws['worker']: ws for ws in worker_stats_raw}
+
+    products_by_worker = dps.filter(worker__in=workers).values(
+        'worker', 'product__name', 'product__code'
+    ).annotate(total_qty=Sum('quantity')).order_by('worker', '-total_qty')
+
+    worker_products = {}
+    for pw in products_by_worker:
+        wid = pw['worker']
+        if wid not in worker_products:
+            worker_products[wid] = []
+        worker_products[wid].append(pw)
+
+    stats = {}
+    for w in workers:
+        ws = worker_stats.get(w.pk, {})
+        stats[w.pk] = {
+            'total_qty': ws.get('total_qty', 0),
+            'count': ws.get('count', 0),
+            'first_date': ws.get('first_date'),
+            'last_date': ws.get('last_date'),
+            'products': worker_products.get(w.pk, []),
         }
 
     return render(request, 'workers/worker_list.html', {
         'workers': workers,
-        'worker_stats': worker_stats,
+        'worker_stats': stats,
         'date_from': date_from,
         'date_to': date_to,
         'search': search,

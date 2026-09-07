@@ -37,7 +37,7 @@ class PurchaseRecord(models.Model):
     total_price = models.DecimalField('قیمت کل', max_digits=15, decimal_places=0)
     supplier = models.CharField('تامین‌کننده', max_length=200)
     invoice_number = models.CharField('شماره فاکتور', max_length=100, blank=True, default='')
-    purchase_date = models.DateField('تاریخ خرید')
+    purchase_date = models.DateField('تاریخ خرید', null=True, blank=True)
     notes = models.TextField('یادداشت‌ها', blank=True, default='')
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, verbose_name='ایجاد کننده')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -55,7 +55,19 @@ class PurchaseRecord(models.Model):
         self.total_price = self.quantity * self.unit_price
         super().save(*args, **kwargs)
         self.material.current_stock += self.quantity
-        self.material.save(update_fields=['current_stock'])
+        update_fields = ['current_stock']
+        if self.material.purchase_price != self.unit_price:
+            from apps.materials.models import MaterialPriceHistory
+            MaterialPriceHistory.objects.create(
+                material=self.material,
+                old_price=self.material.purchase_price,
+                new_price=self.unit_price,
+                changed_by=self.created_by,
+                reason=f'خرید با قیمت جدید از {self.supplier}',
+            )
+            self.material.purchase_price = self.unit_price
+            update_fields.append('purchase_price')
+        self.material.save(update_fields=update_fields)
         InventoryTransaction.objects.create(
             material=self.material,
             type='in',
@@ -67,17 +79,6 @@ class PurchaseRecord(models.Model):
             notes=f'خرید از {self.supplier}',
             created_by=self.created_by,
         )
-        if self.material.purchase_price != self.unit_price:
-            from apps.materials.models import MaterialPriceHistory
-            MaterialPriceHistory.objects.create(
-                material=self.material,
-                old_price=self.material.purchase_price,
-                new_price=self.unit_price,
-                changed_by=self.created_by,
-                reason=f'خرید با قیمت جدید از {self.supplier}',
-            )
-            self.material.purchase_price = self.unit_price
-            self.material.save(update_fields=['purchase_price'])
 
 
 class WasteRecord(models.Model):
@@ -188,7 +189,7 @@ class ProductPurchase(models.Model):
     total_price = models.DecimalField('قیمت کل', max_digits=15, decimal_places=0)
     supplier = models.CharField('تامین‌کننده', max_length=200)
     invoice_number = models.CharField('شماره فاکتور', max_length=100, blank=True, default='')
-    purchase_date = models.DateField('تاریخ خرید')
+    purchase_date = models.DateField('تاریخ خرید', null=True, blank=True)
     notes = models.TextField('یادداشت‌ها', blank=True, default='')
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, verbose_name='ایجاد کننده')
     created_at = models.DateTimeField(auto_now_add=True)

@@ -19,7 +19,7 @@ urlpatterns = [
     path('backup/', include('apps.backup.urls')),
     path('settings/', include('apps.settings_app.urls')),
     path('updater/', include('apps.updater.urls')),
-    path('accounts/', include('django.contrib.auth.urls')),
+    path('notifications/mark-all-read/', include('apps.common.urls')),
 ]
 
 if settings.DEBUG:

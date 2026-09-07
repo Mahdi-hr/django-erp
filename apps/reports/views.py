@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.db.models import Sum, Q
+from django.utils import timezone
 from datetime import datetime, timedelta
 import csv
 
@@ -254,14 +255,14 @@ def financial_summary(request):
     from apps.invoices.models import Invoice
     from apps.inventory.models import PurchaseRecord
     from apps.production.models import ProductionOrder
-    month = request.GET.get('month', datetime.now().month)
-    year = request.GET.get('year', datetime.now().year)
+    month = request.GET.get('month', timezone.now().month)
+    year = request.GET.get('year', timezone.now().year)
     try:
         month = int(month)
         year = int(year)
     except (ValueError, TypeError):
-        month = datetime.now().month
-        year = datetime.now().year
+        month = timezone.now().month
+        year = timezone.now().year
     sales = Invoice.objects.filter(type='sale', status='paid', issue_date__month=month, issue_date__year=year)
     total_sales = sales.aggregate(total=Sum('total'))['total'] or 0
     purchases = PurchaseRecord.objects.filter(purchase_date__month=month, purchase_date__year=year)
